@@ -55,17 +55,16 @@ info:
 	PYTHONPATH=python $(PYTHON) -m fracval.diagnostics
 
 fortran-test: $(TARGET)
-	bash tests/run_tests.sh $(TARGET)
+	$(PYTHON) -m pytest tests/python/test_fortran_cli.py
 
 python-ext:
-	FC=$(FC) $(PYTHON) python/build_fortran_extension.py
+	$(PYTHON) tools/build.py ext --fc $(FC)
 
 python-test: $(TARGET) python-ext
-	PYTHONPATH=python $(PYTHON) tests/python/test_qt_runtime_paths.py
-	PYTHONPATH=python $(PYTHON) tests/python/test_python_api.py
-	PYTHONPATH=python $(PYTHON) tests/python/test_visualization.py
+	$(PYTHON) -m pytest --ignore=tests/python/test_fortran_cli.py
 
-test: fortran-test python-test
+test: $(TARGET) python-ext
+	$(PYTHON) -m pytest
 
 gui: $(TARGET)
 	@PYTHONPATH=python $(PYTHON) -c "import PySide6; from PySide6.QtWebEngineWidgets import QWebEngineView" >/dev/null 2>&1 || \
@@ -76,7 +75,8 @@ qt-check:
 	PYTHONPATH=python $(PYTHON) -m fracval.desktop.qt_runtime
 
 gui-test:
-	PYTHONPATH=python QTWEBENGINE_DISABLE_SANDBOX=1 QTWEBENGINE_CHROMIUM_FLAGS='--disable-gpu --no-sandbox' $(PYTHON) tests/python/test_qt_gui.py
+	FRACVAL_RUN_GUI_TESTS=1 QTWEBENGINE_DISABLE_SANDBOX=1 QTWEBENGINE_CHROMIUM_FLAGS='--disable-gpu --no-sandbox' \
+		$(PYTHON) -m pytest tests/python/test_qt_gui.py -s
 
 docs:
 	mkdir -p $(BUILD_DIR)/docs
