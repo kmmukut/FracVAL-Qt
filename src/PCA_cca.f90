@@ -91,7 +91,8 @@ Y_sel = Y(selected_real)
 Z_sel = Z(selected_real)
 R_sel = R(selected_real)
 R_k = R(k)
-call sticking_process(X_k,Y_k,Z_k,theta_a,x0,y0,z0,r0,i_vec,j_vec, X_sel, Y_sel, Z_sel, R_sel, R_k, x_cm,y_cm,z_cm,Gamma_pc,contact_overlap)
+call sticking_process(X_k,Y_k,Z_k,theta_a,x0,y0,z0,r0,i_vec,j_vec, &
+     & X_sel,Y_sel,Z_sel,R_sel,R_k,x_cm,y_cm,z_cm,Gamma_pc,contact_overlap)
 X(k) = X_k
 Y(k) = Y_k
 Z(k) = Z_k
@@ -120,7 +121,8 @@ Y_sel = Y(selected_real)
 Z_sel = Z(selected_real)
 R_sel = R(selected_real)
 R_k = R(k)
-call sticking_process(X_k, Y_k, Z_k, theta_a,x0,y0,z0,r0,i_vec,j_vec, X_sel, Y_sel, Z_sel, R_sel, R_k, x_cm,y_cm,z_cm,Gamma_pc,contact_overlap)
+call sticking_process(X_k,Y_k,Z_k,theta_a,x0,y0,z0,r0,i_vec,j_vec, &
+     & X_sel,Y_sel,Z_sel,R_sel,R_k,x_cm,y_cm,z_cm,Gamma_pc,contact_overlap)
 X(k) = X_k
 Y(k) = Y_k
 Z(k) = Z_k
@@ -373,7 +375,8 @@ end do
 end subroutine Random_select_list_pick_one
 
 
-subroutine sticking_process(X_k, Y_k, Z_k, theta_a,x0,y0,z0,r0,i_vec,j_vec, X_sel, Y_sel, Z_sel, R_sel, R_k,x_cm,y_cm,z_cm,Gamma_pc,contact_overlap)
+subroutine sticking_process(X_k,Y_k,Z_k,theta_a,x0,y0,z0,r0,i_vec,j_vec, &
+     & X_sel,Y_sel,Z_sel,R_sel,R_k,x_cm,y_cm,z_cm,Gamma_pc,contact_overlap)
 implicit none
 real, intent(in) :: X_sel, Y_sel, Z_sel, R_sel, R_k
 real, intent(in) :: x_cm,y_cm,z_cm,Gamma_pc,contact_overlap

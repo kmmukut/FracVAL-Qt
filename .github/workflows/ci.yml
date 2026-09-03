@@ -30,7 +30,9 @@ jobs:
           python -m pip install -e '.[dev]'
 
       - name: Build standalone Fortran generator
-        run: make -j2
+        # Treat free-form line truncation as an error so source remains portable
+        # across GNU Fortran versions (Fortran free-form limit: 132 columns).
+        run: make -j2 FFLAGS='-O2 -Werror=line-truncation'
 
       - name: Run deterministic Fortran/Python regression suite
         run: make test PYTHON=python

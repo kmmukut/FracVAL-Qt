@@ -31,4 +31,4 @@ __all__ = [
     "runtime_info",
     "format_runtime_info",
 ]
-__version__ = "1.0.0"
+__version__ = "1.0.1"

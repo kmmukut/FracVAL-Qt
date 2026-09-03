@@ -23,7 +23,8 @@ do while (ii .LE. N)
 end do
 
 else
-! https://scholar.google.cl/scholar?q=Evans+Statistical+Distributions.&hl=es&as_sdt=0&as_vis=1&oi=scholart&sa=X&ved=0ahUKEwiBvtrSo93XAhXCfpAKHY9iA5IQgQMIJTAA
+! Reference lookup used by the original implementation:
+! https://scholar.google.cl/scholar?q=Evans+Statistical+Distributions
 ! Tails of the distribution are withdrawn
 ! 2 sigmas -> 95.5% of the distribution
 

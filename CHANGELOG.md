@@ -1,5 +1,13 @@
 # FracVAL-Qt changelog
 
+## 1.0.1 - 2026-09-02
+
+### Fixed
+
+- Wrapped overlong free-form Fortran statements to stay within the standard 132-column source limit.
+- Prevented strict/newer `gfortran` builds from truncating the `sticking_process` declaration and producing cascading `Unexpected ... in CONTAINS section` errors.
+- CI now treats Fortran line truncation as an error so this portability regression is caught immediately.
+
 ## 1.0.0 - FracVAL-Qt repository baseline
 
 - Consolidated FracVAL into a single cross-platform-oriented source tree.

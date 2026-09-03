@@ -530,7 +530,8 @@ do while (lista_suma .EQ. 0)
         COR2(:,3) = Z2
         COR2(:,4) = R2
 
-call CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0,i_vec,j_vec,prev_cand1,prev_cand2,Gamma_pc,Gamma_real,Ext_case,contact_overlap)
+call CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0, &
+     & i_vec,j_vec,prev_cand1,prev_cand2,Gamma_pc,Gamma_real,Ext_case,contact_overlap)
     !CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0,i_vec,j_vec,prev_cand1,prev_cand2,Gamma_pc,Gamma_real,Ext_case)
 
         X1(:) = COR1(:,1)
@@ -593,7 +594,8 @@ call CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0,i_vec,j_vec,p
                 COR2(:,3) = Z2
                 COR2(:,4) = R2
 
-call CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0,i_vec,j_vec,prev_cand1,prev_cand2,Gamma_pc,Gamma_real,Ext_case,contact_overlap)
+call CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0, &
+     & i_vec,j_vec,prev_cand1,prev_cand2,Gamma_pc,Gamma_real,Ext_case,contact_overlap)
     !CCA_Sticking_process_v1(COR1,CM1,n1,COR2,CM2,n2,theta_a,vec_0,i_vec,j_vec,prev_cand1,prev_cand2,Gamma_pc,Gamma_real,Ext_case)
                 X1(:) = COR1(:,1)
                 Y1(:) = COR1(:,2)
