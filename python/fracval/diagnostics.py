@@ -67,3 +67,7 @@ def format_runtime_info() -> str:
 
 def main() -> None:
     print(format_runtime_info())
+
+
+if __name__ == "__main__":
+    main()
