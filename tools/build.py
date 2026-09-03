@@ -164,18 +164,121 @@ def require(toolchain, kind: str) -> Compiler:
     return compiler
 
 
-# ---------- subcommands (bodies added in Task 5) ----------
+# ---------- build steps ----------
+
+def compile_fortran(fc: Path, flags: list[str], sources: tuple[str, ...], objdir: Path) -> list[Path]:
+    objdir.mkdir(parents=True, exist_ok=True)
+    objects: list[Path] = []
+    for name in sources:
+        obj = objdir / (Path(name).stem + ".o")
+        run([fc, *flags, f"-J{objdir}", f"-I{objdir}", "-c", SRC / name, "-o", obj])
+        objects.append(obj)
+    return objects
+
 
 def build_executable(fc: Path, fflags: str) -> Path:
-    raise NotImplementedError
+    flags = fortran_flags(fflags, shared=False)
+    objects = compile_fortran(fc, flags, EXE_SOURCES, EXE_OBJ)
+    target = executable_path()
+    run([fc, *flags, *objects, *executable_link_flags(), "-o", target])
+    print(f"Built: {target.relative_to(ROOT)}")
+    return target
+
+
+def remove_existing_extension(target: Path) -> None:
+    try:
+        target.unlink(missing_ok=True)
+        for dll in target.parent.glob("*.dll"):
+            dll.unlink()
+    except PermissionError as exc:
+        raise SystemExit(
+            f"Cannot replace {target.name}: the file is in use. Close running FracVAL/Python "
+            "processes that have the extension loaded (GUI, notebooks) and retry."
+        ) from exc
+
+
+def copy_runtime_dlls(compiler_dir: Path, dest: Path) -> list[Path]:
+    """Copy the gfortran runtime DLLs next to the extension (Windows fallback)."""
+    copied: list[Path] = []
+    for name in RUNTIME_DLLS:
+        source = compiler_dir / name
+        if source.is_file():
+            shutil.copy2(source, dest / name)
+            copied.append(dest / name)
+    return copied
+
+
+def verify_extension_import(exclude_dirs: list[Path]) -> tuple[bool, str]:
+    """Import the built extension in a clean subprocess; return (ok, output)."""
+    code = "import fracval._fracval_fortran as m; print(m.__file__)"
+    proc = subprocess.run(
+        [sys.executable, "-c", code], env=verification_env(exclude_dirs),
+        cwd=str(BUILD), capture_output=True, text=True, check=False,
+    )
+    return proc.returncode == 0, (proc.stdout + proc.stderr).strip()
 
 
 def build_extension(fc: Path, cc: Path, fflags: str) -> Path:
-    raise NotImplementedError
+    import numpy as np  # deferred so `exe` works in environments without NumPy
+
+    shutil.rmtree(EXT_BUILD, ignore_errors=True)
+    EXT_GEN.mkdir(parents=True)
+    EXT_OBJ.mkdir(parents=True)
+
+    run([sys.executable, "-m", "numpy.f2py", PYF, "--build-dir", EXT_GEN])
+
+    flags = fortran_flags(fflags, shared=True)
+    objects = compile_fortran(fc, flags, EXT_SOURCES, EXT_OBJ)
+    wrapper = EXT_GEN / "_fracval_fortran-f2pywrappers.f"
+    wrapper_obj = EXT_OBJ / "f2pywrappers.o"
+    run([fc, *flags, "-c", wrapper, "-o", wrapper_obj])
+    objects.append(wrapper_obj)
+
+    f2py_src = Path(np.f2py.__file__).resolve().parent / "src"
+    includes = [sysconfig.get_paths()["include"], np.get_include(), str(f2py_src)]
+    cflags = c_flags(includes)
+    module_obj = EXT_OBJ / "module.o"
+    fobject_obj = EXT_OBJ / "fortranobject.o"
+    run([cc, *cflags, "-c", EXT_GEN / "_fracval_fortranmodule.c", "-o", module_obj])
+    run([cc, *cflags, "-c", f2py_src / "fortranobject.c", "-o", fobject_obj])
+    objects.extend([module_obj, fobject_obj])
+
+    target = extension_path()
+    remove_existing_extension(target)
+    link = [fc, *extension_link_flags(), *objects]
+    import_library = python_import_library()
+    if import_library is not None:
+        link.append(import_library)
+    link.extend(["-o", target])
+    run(link)
+
+    exclude = [fc.parent, cc.parent]
+    ok, output = verify_extension_import(exclude)
+    if not ok and IS_WINDOWS:
+        copied = copy_runtime_dlls(fc.parent, target.parent)
+        print("Import check failed; copied runtime DLLs beside the extension: "
+              + (", ".join(p.name for p in copied) or "none found"))
+        ok, output = verify_extension_import(exclude)
+    if not ok:
+        raise SystemExit("The extension was linked but cannot be imported:\n" + output)
+    print(f"Built: {target.relative_to(ROOT)}")
+    return target
 
 
 def clean() -> None:
-    raise NotImplementedError
+    for directory in (EXE_OBJ, EXT_BUILD, BUILD / "setuptools", BUILD / "lib"):
+        shutil.rmtree(directory, ignore_errors=True)
+    for bdist in BUILD.glob("bdist.*"):
+        shutil.rmtree(bdist, ignore_errors=True)
+    for pattern in ("*.o", "*.mod", "*.png", "*.html", "fracval", "fracval.exe"):
+        for path in BUILD.glob(pattern):
+            if path.is_file():
+                path.unlink()
+    for pattern in ("_fracval_fortran*.so", "_fracval_fortran*.dylib", "_fracval_fortran*.pyd", "*.dll"):
+        for path in PKG.glob(pattern):
+            path.unlink()
+    (BUILD / ".gitkeep").touch()
+    print("Cleaned native build products.")
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -80,3 +80,31 @@ def test_cli_rejects_unknown_command(build_tool, capsys):
         assert exc.code != 0
     else:
         raise AssertionError("argparse should reject unknown commands")
+
+
+def test_copy_runtime_dlls_copies_only_present_files(build_tool, tmp_path):
+    src = tmp_path / "bin"
+    dest = tmp_path / "pkg"
+    src.mkdir()
+    dest.mkdir()
+    (src / "libgfortran-5.dll").write_bytes(b"x")
+    (src / "libquadmath-0.dll").write_bytes(b"y")
+    copied = build_tool.copy_runtime_dlls(src, dest)
+    assert sorted(p.name for p in copied) == ["libgfortran-5.dll", "libquadmath-0.dll"]
+    assert (dest / "libgfortran-5.dll").read_bytes() == b"x"
+
+
+def test_remove_existing_extension_reports_locked_file(build_tool, tmp_path, monkeypatch):
+    target = tmp_path / "_fracval_fortran.pyd"
+    target.write_bytes(b"z")
+
+    def locked(self, missing_ok=False):
+        raise PermissionError("in use")
+
+    monkeypatch.setattr(Path, "unlink", locked)
+    try:
+        build_tool.remove_existing_extension(target)
+    except SystemExit as exc:
+        assert "Close running" in str(exc)
+    else:
+        raise AssertionError("locked extension should produce a SystemExit with guidance")
