@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import secrets
 import subprocess
+import sys
 import tempfile
 import threading
 
@@ -181,17 +182,27 @@ def _namelist(cfg: FracVALConfig, output_dir: Path) -> str:
 """
 
 
+def _subprocess_kwargs() -> dict[str, int]:
+    """Extra subprocess options: hide the console window of the executable on Windows."""
+    if sys.platform == "win32":
+        return {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)}
+    return {}
+
+
 def _generate_executable(cfg: FracVALConfig, executable: str | Path | None) -> Aggregate:
     exe = _find_executable(executable)
     with tempfile.TemporaryDirectory(prefix="fracval-python-") as tmp:
         tmp_path = Path(tmp)
         out = tmp_path / "results"
         inp = tmp_path / "fracval.in"
+        # Create the directory here so the Fortran shell-based mkdir is a no-op.
+        out.mkdir(parents=True, exist_ok=True)
         inp.write_text(_namelist(cfg, out))
         try:
             completed = subprocess.run(
                 [str(exe), str(inp)], text=True, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, check=False, timeout=300,
+                **_subprocess_kwargs(),
             )
         except subprocess.TimeoutExpired as exc:
             raise GenerationError("standalone FracVAL generation timed out") from exc

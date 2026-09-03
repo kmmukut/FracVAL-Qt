@@ -282,14 +282,20 @@ contains
 
     subroutine ensure_output_directory()
         character(len=1024) :: command
+        character(len=256) :: native_dir
         character(len=64) :: os_name
-        integer :: exitstat, cmdstat, envstat
+        integer :: exitstat, cmdstat, envstat, idx
 
         os_name = ''
         call get_environment_variable('OS', os_name, status=envstat)
 
         if (envstat == 0 .and. index(os_name, 'Windows_NT') > 0) then
-            command = 'if not exist "'//trim(output_dir)//'" mkdir "'//trim(output_dir)//'"'
+            ! cmd.exe treats '/' as a switch prefix, so hand it a native path.
+            native_dir = output_dir
+            do idx = 1, len_trim(native_dir)
+                if (native_dir(idx:idx) == '/') native_dir(idx:idx) = '\'
+            end do
+            command = 'if not exist "'//trim(native_dir)//'" mkdir "'//trim(native_dir)//'"'
         else
             command = 'mkdir -p "'//trim(output_dir)//'"'
         end if
