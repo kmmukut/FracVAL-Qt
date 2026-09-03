@@ -1,0 +1,35 @@
+python module _fracval_fortran
+    interface
+        subroutine fracval_generate(n_in, df_in, kf_in, rp_g_in, rp_gstd_in, &
+                                    ext_case_in, nsubcl_perc_in, tol_ov_in, seed_in, &
+                                    max_attempts, overlap_mode_in, overlap_fraction_in, &
+                                    overlap_mean_in, overlap_std_in, overlap_max_in, &
+                                    x_out, y_out, z_out, r_out, contact_overlap_out, &
+                                    n_contacts, status, attempts)
+            threadsafe
+            integer intent(in) :: n_in
+            real intent(in) :: df_in
+            real intent(in) :: kf_in
+            real intent(in) :: rp_g_in
+            real intent(in) :: rp_gstd_in
+            integer intent(in) :: ext_case_in
+            real intent(in) :: nsubcl_perc_in
+            real intent(in) :: tol_ov_in
+            integer intent(in) :: seed_in
+            integer intent(in) :: max_attempts
+            integer intent(in) :: overlap_mode_in
+            real intent(in) :: overlap_fraction_in
+            real intent(in) :: overlap_mean_in
+            real intent(in) :: overlap_std_in
+            real intent(in) :: overlap_max_in
+            real dimension(n_in), intent(out), depend(n_in) :: x_out
+            real dimension(n_in), intent(out), depend(n_in) :: y_out
+            real dimension(n_in), intent(out), depend(n_in) :: z_out
+            real dimension(n_in), intent(out), depend(n_in) :: r_out
+            real dimension(n_in), intent(out), depend(n_in) :: contact_overlap_out
+            integer intent(out) :: n_contacts
+            integer intent(out) :: status
+            integer intent(out) :: attempts
+        end subroutine fracval_generate
+    end interface
+end python module _fracval_fortran

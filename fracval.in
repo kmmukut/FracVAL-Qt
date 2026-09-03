@@ -1,0 +1,36 @@
+&fracval
+    ! Aggregate / fractal parameters
+    N                   = 100
+    Df                  = 1.79
+    kf                  = 1.40
+
+    ! Primary-particle radius distribution
+    ! rp_gstd = 1.0 gives monodisperse particles.
+    rp_g                = 15.0
+    rp_gstd             = 1.0
+
+    Quantity_aggregates = 1
+    Ext_case            = 0
+    Nsubcl_perc         = 0.10
+
+    ! Numerical tolerance for UNINTENDED particle overlap. This is separate
+    ! from the physical/intended contact-overlap model below.
+    tol_ov              = 1.0e-6
+
+    ! -1 uses the compiler/runtime default random seed. Any non-negative
+    ! integer makes the run reproducible for the same build/backend.
+    random_seed_value   = 12345
+
+    ! Intended particle overlap at the joining contact only.
+    ! overlap_mode = 'none' | 'fixed' | 'statistical'
+    ! Fractions are relative to Ri+Rj: 0.05 means 5% center-distance overlap.
+    overlap_mode        = 'none'
+    overlap_fraction    = 0.05
+
+    ! Statistical mode uses a normal distribution bounded to [0, overlap_max].
+    overlap_mean        = 0.05
+    overlap_std         = 0.02
+    overlap_max         = 0.12
+
+    output_dir          = 'results'
+/

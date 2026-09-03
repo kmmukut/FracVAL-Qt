@@ -1,0 +1,117 @@
+# -----------------------------------------------------------------------------
+# FracVAL-Qt .gitignore
+# Keep source, documentation, examples, and committed regression fixtures.
+# Ignore local builds, environments, caches, and generated run output.
+# -----------------------------------------------------------------------------
+
+# Fortran / native build products
+build/*
+!build/.gitkeep
+!build/README.md
+*.o
+*.obj
+*.mod
+*.smod
+*.a
+*.lib
+*.dll
+*.dylib
+*.so
+*.pyd
+*.exe
+
+# F2PY / compiler scratch
+*.pyf.tmp
+*.f2py_f2cmap
+.f2py_f2cmap
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.conda/
+
+# Python packaging
+*.egg-info/
+.eggs/
+dist/
+wheelhouse/
+*.whl
+pip-wheel-metadata/
+
+# Default/local simulation output
+results/*
+!results/.gitkeep
+!results/README.md
+
+# Preserve committed regression fixtures under tests/**/results/.
+# Add ad-hoc test output elsewhere rather than overwriting these references.
+
+# Jupyter
+.ipynb_checkpoints/
+.jupyter/
+
+# Plot / GUI exports generated during local work
+*.html
+*.png
+*.svg
+*.webp
+
+# Qt / QtWebEngine runtime caches and profiles
+.qt/
+QtWebEngine/
+qtwebengine_*/
+*.log
+
+# LaTeX intermediates (keep .tex and the committed final manual PDF)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary / local files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+.cache/

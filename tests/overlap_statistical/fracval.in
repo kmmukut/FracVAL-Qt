@@ -1,0 +1,18 @@
+&fracval
+    N                   = 30
+    Df                  = 1.79
+    kf                  = 1.40
+    rp_g                = 15.0
+    rp_gstd             = 1.0
+    Quantity_aggregates = 1
+    Ext_case            = 0
+    Nsubcl_perc         = 0.10
+    tol_ov              = 1.0e-6
+    random_seed_value   = 24680
+    overlap_mode        = 'statistical'
+    overlap_fraction    = 0.0
+    overlap_mean        = 0.05
+    overlap_std         = 0.02
+    overlap_max         = 0.12
+    output_dir          = 'tests/overlap_statistical/results'
+/

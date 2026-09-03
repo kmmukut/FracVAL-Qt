@@ -1,0 +1,23 @@
+# Normalize text files across macOS/Linux/Windows checkouts.
+* text=auto eol=lf
+
+*.f90 text diff=fortran
+*.py text
+*.pyf text
+*.md text
+*.tex text
+*.toml text
+*.in text
+*.sh text eol=lf
+*.json text
+*.csv text
+*.dat text
+*.yml text
+*.yaml text
+*.cff text
+
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary

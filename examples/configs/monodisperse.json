@@ -1,0 +1,17 @@
+{
+  "n": 100,
+  "df": 1.79,
+  "kf": 1.4,
+  "rp_g": 15.0,
+  "rp_gstd": 1.0,
+  "ext_case": 0,
+  "nsubcl_perc": 0.1,
+  "tol_ov": 1e-06,
+  "seed": 12345,
+  "max_attempts": 250,
+  "overlap_mode": "none",
+  "overlap_fraction": 0.0,
+  "overlap_mean": 0.05,
+  "overlap_std": 0.02,
+  "overlap_max": 0.12
+}

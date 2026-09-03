@@ -1,0 +1,19 @@
+! Polydisperse smoke-test case
+&fracval
+    N                   = 100
+    Df                  = 1.68
+    kf                  = 0.98
+    rp_g                = 15.0
+    rp_gstd             = 2.00
+    Quantity_aggregates = 1
+    Ext_case            = 0
+    Nsubcl_perc         = 0.10
+    overlap_mode        = 'none'
+    overlap_fraction    = 0.0
+    overlap_mean        = 0.05
+    overlap_std         = 0.02
+    overlap_max         = 0.12
+    random_seed_value   = 67890
+    tol_ov              = 1.0e-6
+    output_dir          = 'tests/polydisperse/results'
+/

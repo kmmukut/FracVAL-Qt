@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: >-
+  If you use the FracVAL aggregation methodology, please cite the original
+  Morán et al. paper. If you use FracVAL-Qt-specific functionality, also cite
+  this repository and the release/version used.
+title: FracVAL-Qt
+type: software
+version: 1.0.0
+license: GPL-3.0-only
+authors:
+  - name: FracVAL-Qt contributors
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Morán
+      given-names: J.
+    - family-names: Fuentes
+      given-names: A.
+    - family-names: Liu
+      given-names: F.
+    - family-names: Yon
+      given-names: J.
+  title: >-
+    FracVAL: An improved tunable algorithm of cluster-cluster aggregation for
+    generation of fractal structures formed by polydisperse primary particles
+  journal: Computer Physics Communications
+  volume: '239'
+  start: '225'
+  end: '237'
+  year: 2019
+  doi: 10.1016/j.cpc.2019.01.015
