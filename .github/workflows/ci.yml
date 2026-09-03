@@ -34,10 +34,13 @@ jobs:
         # across GNU Fortran versions (Fortran free-form limit: 132 columns).
         run: make -j2 FFLAGS='-O2 -Werror=line-truncation'
 
-      - name: Run deterministic Fortran/Python regression suite
-        run: make test PYTHON=python
+      - name: Build the F2PY extension
+        run: python tools/build.py ext
 
-  conda-toolchain-probe:
+      - name: Run deterministic Fortran/Python regression suite
+        run: python -m pytest --ignore=tests/python/test_qt_gui.py
+
+  conda-matrix:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -52,9 +55,19 @@ jobs:
     defaults:
       run:
         shell: bash -el {0}
+    env:
+      QTWEBENGINE_DISABLE_SANDBOX: '1'
+      QTWEBENGINE_CHROMIUM_FLAGS: '--disable-gpu --no-sandbox'
+      FRACVAL_RUN_GUI_TESTS: '1'
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Install Linux libraries needed by headless QtWebEngine
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0 libnss3 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2t64
 
       - name: Set up Miniforge environment
         uses: conda-incubator/setup-miniconda@v3
@@ -66,9 +79,23 @@ jobs:
 
       - name: Report toolchain
         run: |
-          conda info
           conda list
-          python --version
           gfortran --version
           gcc --version
-          python -c "import numpy, plotly, PySide6; print(numpy.__version__, plotly.__version__, PySide6.__version__)"
+
+      - name: Install FracVAL (editable) with GUI and dev extras
+        run: python -m pip install -e ".[gui,dev]"
+
+      - name: Build executable and F2PY extension
+        run: python tools/build.py all
+
+      - name: Diagnostics
+        run: |
+          fracval-info
+          fracval-qt-check || true
+
+      - name: Run the pytest suite (Fortran CLI + Python API + Qt paths)
+        run: python -m pytest --ignore=tests/python/test_qt_gui.py
+
+      - name: Headless Qt GUI construction smoke test
+        run: python -m pytest tests/python/test_qt_gui.py -s
