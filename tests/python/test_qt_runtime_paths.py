@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import builtins
+import importlib
 import os
 from pathlib import Path
 import sys
@@ -98,6 +100,36 @@ def test_headless_prefers_offscreen(tmp_path, monkeypatch, isolated_environ):
     monkeypatch.setattr(qt_runtime, "discover_qt_runtime", lambda: _fake_info(tmp_path, ("windows", "minimal", "offscreen")))
     info = qt_runtime.configure_qt_runtime(headless=True)
     assert info.selected_platform == "offscreen"
+
+
+def test_missing_qtwebengine_gives_actionable_import_error(monkeypatch):
+    """viewer.py must translate a missing QtWebEngine into guidance, not a bare
+    ModuleNotFoundError, while leaving other ImportErrors untouched.
+
+    Simulated via builtins.__import__ so this passes on a machine (like this
+    one) where QtWebEngine actually is installed.
+    """
+    real_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "PySide6.QtWebEngineWidgets":
+            raise ModuleNotFoundError("No module named 'PySide6.QtWebEngineWidgets'")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    sys.modules.pop("fracval.desktop.viewer", None)
+    try:
+        with pytest.raises(ImportError) as excinfo:
+            importlib.import_module("fracval.desktop.viewer")
+    finally:
+        # A failed import already drops the partial module, but be defensive
+        # so the real module reimports cleanly for any test that runs after.
+        sys.modules.pop("fracval.desktop.viewer", None)
+
+    message = str(excinfo.value)
+    assert "does not provide QtWebEngine" in message
+    assert "python -m pip install --upgrade --force-reinstall PySide6" in message
+    assert isinstance(excinfo.value.__cause__, ModuleNotFoundError)
 
 
 if __name__ == "__main__":

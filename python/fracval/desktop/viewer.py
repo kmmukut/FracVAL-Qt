@@ -5,7 +5,20 @@ from pathlib import Path
 import tempfile
 
 from PySide6.QtCore import QUrl
-from PySide6.QtWebEngineWidgets import QWebEngineView
+
+try:
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+except ModuleNotFoundError as exc:  # pragma: no cover - depends on the local Qt install
+    raise ImportError(
+        "PySide6 is installed but does not provide QtWebEngine, which FracVAL's 3-D "
+        "viewer requires. This happens when PySide6 comes from conda-forge or when an "
+        "existing PySide6 already satisfied the requirement, so the pip wheel (which "
+        "bundles QtWebEngine via PySide6-Addons) was never installed. Reinstall it "
+        "with:\n"
+        "    python -m pip install --upgrade --force-reinstall PySide6\n"
+        "then verify with:\n"
+        "    python -c \"from PySide6.QtWebEngineWidgets import QWebEngineView\""
+    ) from exc
 
 from ..aggregate import Aggregate
 from ..visualization import ViewerAppearance, plot_3d

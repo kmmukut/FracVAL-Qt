@@ -40,7 +40,11 @@ def main() -> int:
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         os.environ.setdefault("QTWEBENGINE_DISABLE_SANDBOX", "1")
 
-    from .main_window import MainWindow
+    try:
+        from .main_window import MainWindow
+    except ImportError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
     QApplication.setApplicationName("FracVAL")
     QApplication.setOrganizationName("FracVAL")
