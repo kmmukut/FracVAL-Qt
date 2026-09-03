@@ -14,13 +14,27 @@ from fracval.desktop.qt_runtime import apply_qt_library_path, configure_qt_runti
 
 try:
     qt_info = configure_qt_runtime(headless=True)
-except Exception as exc:
-    raise SystemExit(f"FAIL: Qt runtime configuration failed: {exc}") from exc
+except Exception as exc:  # pragma: no cover - depends on the local Qt install
+    # Re-raise rather than converting to SystemExit: a module-scope SystemExit
+    # crashes pytest collection with INTERNALERROR and hides the real cause,
+    # which on Windows is usually a Qt DLL-load failure rather than a missing
+    # package. The hint goes to stderr; the original traceback is preserved.
+    print(f"FAIL: Qt runtime configuration failed: {exc}", file=sys.stderr)
+    raise
 
 try:
     from PySide6.QtWidgets import QApplication
-except ImportError as exc:
-    raise SystemExit("FAIL: PySide6 is not installed; install with: python -m pip install -e '.[gui]'") from exc
+except ImportError as exc:  # pragma: no cover - depends on the local Qt install
+    # Re-raise rather than converting to SystemExit: a module-scope SystemExit
+    # crashes pytest collection with INTERNALERROR and hides the real cause,
+    # which on Windows is usually a Qt DLL-load failure rather than a missing
+    # package. The hint goes to stderr; the original traceback is preserved.
+    print(
+        f"Qt import failed ({exc}). If PySide6 is missing, install it with: "
+        "python -m pip install -e '.[gui]'",
+        file=sys.stderr,
+    )
+    raise
 
 apply_qt_library_path(qt_info)
 

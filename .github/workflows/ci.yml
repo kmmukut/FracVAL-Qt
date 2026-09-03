@@ -115,5 +115,29 @@ jobs:
       - name: Run the pytest suite (Fortran CLI + Python API + Qt paths)
         run: python -m pytest --ignore=tests/python/test_qt_gui.py
 
+      - name: Probe PySide6 import (temporary; remove once Windows CI is green)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        run: |
+          python -c "import PySide6, sys; print('PySide6', PySide6.__version__ if hasattr(PySide6,'__version__') else '?', sys.version)"
+          python -c "import traceback
+          try:
+              from PySide6.QtCore import QLibraryInfo
+              print('QtCore OK', QLibraryInfo.build())
+          except Exception:
+              traceback.print_exc()"
+          python -c "import traceback
+          try:
+              from PySide6.QtWidgets import QApplication
+              print('QtWidgets OK')
+          except Exception:
+              traceback.print_exc()"
+          python -c "import traceback
+          try:
+              from PySide6.QtWebEngineWidgets import QWebEngineView
+              print('QtWebEngineWidgets OK')
+          except Exception:
+              traceback.print_exc()"
+
       - name: Headless Qt GUI construction smoke test
         run: python -m pytest tests/python/test_qt_gui.py -s
