@@ -24,6 +24,10 @@
 - WebEngine viewer temp-directory cleanup cannot raise at exit on Windows.
 - Removed a dead `GITHUB_SETUP.md` link from the README.
 
+### Known issues
+
+- The Windows CI job builds the standalone executable and the F2PY extension and runs the full pytest suite, and `fracval-qt-check` passes there too. The headless Qt GUI construction test is maintainer-machine verified on Windows instead, because the GitHub runner cannot import Qt from the pip PySide6 wheel inside a conda environment ("DLL load failed ... The specified procedure could not be found").
+
 ## 1.0.1 - 2026-09-02
 
 ### Fixed

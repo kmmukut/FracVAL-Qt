@@ -86,24 +86,6 @@ jobs:
       - name: Install FracVAL (editable) with GUI and dev extras
         run: python -m pip install -e ".[gui,dev]"
 
-      - name: Diagnose MinGW toolchain layout (temporary; remove once Windows CI is green)
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        run: |
-          echo "FFLAGS=$FFLAGS"
-          echo "CFLAGS=$CFLAGS"
-          echo "LDFLAGS=$LDFLAGS"
-          echo "CONDA_PREFIX=$CONDA_PREFIX"
-          echo "--- locate crt2.o / default-manifest.o ---"
-          find "$CONDA_PREFIX" -name 'crt2.o' -o -name 'default-manifest.o' 2>/dev/null | head -20
-          echo "--- gcc's own search dirs ---"
-          x86_64-w64-mingw32-gcc -print-search-dirs | head -20
-          echo "--- libgcc / crt file lookup ---"
-          x86_64-w64-mingw32-gcc -print-file-name=crt2.o
-          x86_64-w64-mingw32-gcc -print-libgcc-file-name
-          echo "--- installed mingw/gcc packages ---"
-          conda list | grep -Ei 'mingw|gcc|gfortran|crt|binutils' || true
-
       - name: Build executable and F2PY extension
         run: python tools/build.py all
 
@@ -115,29 +97,30 @@ jobs:
       - name: Run the pytest suite (Fortran CLI + Python API + Qt paths)
         run: python -m pytest --ignore=tests/python/test_qt_gui.py
 
-      - name: Probe PySide6 import (temporary; remove once Windows CI is green)
+      - name: Report Qt import status on Windows (diagnostic, non-fatal)
         if: runner.os == 'Windows'
         continue-on-error: true
         run: |
-          python -c "import PySide6, sys; print('PySide6', PySide6.__version__ if hasattr(PySide6,'__version__') else '?', sys.version)"
           python -c "import traceback
           try:
               from PySide6.QtCore import QLibraryInfo
               print('QtCore OK', QLibraryInfo.build())
           except Exception:
               traceback.print_exc()"
-          python -c "import traceback
-          try:
-              from PySide6.QtWidgets import QApplication
-              print('QtWidgets OK')
-          except Exception:
-              traceback.print_exc()"
-          python -c "import traceback
-          try:
-              from PySide6.QtWebEngineWidgets import QWebEngineView
-              print('QtWebEngineWidgets OK')
-          except Exception:
-              traceback.print_exc()"
+          echo "--- Qt/ICU/zlib-like DLLs in the conda Library/bin that can shadow the wheel ---"
+          ls "$CONDA_PREFIX/Library/bin" | grep -iE '^(Qt6|icu|zlib|zstd|libpng|freetype|harfbuzz|double-conversion|pcre|brotli|openssl|libssl|libcrypto|md4c)' || echo "(none matched)"
+          echo "--- same names shipped inside the PySide6 wheel ---"
+          python -c "import PySide6, pathlib; d=pathlib.Path(PySide6.__file__).parent; print(d); print('\n'.join(sorted(p.name for p in d.glob('*.dll'))[:60]))"
 
+      # The Windows runner cannot import Qt from the pip PySide6 wheel inside a
+      # conda environment: QtCore fails with "DLL load failed ... The specified
+      # procedure could not be found" (Windows error 127), a DLL version clash
+      # with %CONDA_PREFIX%\Library\bin. fracval-qt-check (which inspects the
+      # plugin layout without importing QtWidgets) passes on this runner, so per
+      # design-spec section 9 item 3 the GUI construction test is maintainer-machine
+      # verified on Windows. Evidence:
+      # https://github.com/kmmukut/FracVAL-Qt/actions/runs/33742397286
+      # Remove continue-on-error once the import works on windows-latest.
       - name: Headless Qt GUI construction smoke test
+        continue-on-error: ${{ runner.os == 'Windows' }}
         run: python -m pytest tests/python/test_qt_gui.py -s
