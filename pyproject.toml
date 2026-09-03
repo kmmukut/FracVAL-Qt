@@ -37,3 +37,8 @@ where = ["python"]
 
 [tool.setuptools.package-data]
 fracval = ["py.typed", "_fracval_fortran.pyf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+pythonpath = ["python"]
+addopts = "-ra"
