@@ -34,10 +34,10 @@ On Debian/Ubuntu, for example:
 sudo apt install gfortran make
 ```
 
-The supplied Makefile and test script are designed for Linux, macOS, WSL, or
-an MSYS2/MinGW-style shell on Windows. The test script is compatible with the
-stock Bash 3.2 shipped by macOS; it does not require Homebrew Bash or GNU
-`find`.
+On every platform the recommended build command is `python tools/build.py exe`
+inside the conda environment described in the top-level README. The Makefile
+is a POSIX convenience wrapper (Linux, macOS, WSL); on Windows use
+`python tools\build.py exe` and `python -m pytest`.
 
 ### For plotting
 
@@ -85,6 +85,15 @@ To use a different compiler or optimization flags:
 
 ```bash
 make FC=gfortran FFLAGS='-O3 -march=native'
+```
+
+Equivalent cross-platform commands:
+
+```bash
+python tools/build.py exe                       # release build
+python tools/build.py exe --debug               # runtime checks
+python tools/build.py exe --fflags "-O3 -march=native"
+python tools/build.py clean
 ```
 
 ---
@@ -217,6 +226,12 @@ If `fracval.in` is in the current directory:
 ./build/fracval
 ```
 
+Windows:
+
+```bat
+build\fracval.exe fracval.in
+```
+
 or equivalently:
 
 ```bash
@@ -301,25 +316,18 @@ Use a different `output_dir` for each case when keeping multiple runs.
 
 ## 7. Tests
 
-Run the bundled monodisperse, polydisperse, fixed-overlap, and statistical-overlap smoke tests:
+The bundled monodisperse, polydisperse, fixed-overlap, and statistical-overlap
+smoke tests live in `tests/python/test_fortran_cli.py`. Run them with:
 
 ```bash
-make test
+python -m pytest tests/python/test_fortran_cli.py
 ```
 
-You can also run the harness directly:
+or, with the Makefile:
 
 ```bash
-./tests/run_tests.sh
+make fortran-test
 ```
-
-From inside `tests/`, use:
-
-```bash
-./run_tests.sh
-```
-
-The harness intentionally stays compatible with macOS's stock Bash 3.2.
 
 The tests verify that:
 
@@ -415,8 +423,9 @@ FracVAL-Qt/
 ├── src/                         # Fortran sources + F2PY-facing wrapper
 ├── build/                       # generated compiler products
 ├── results/
+├── tools/
+│   └── build.py                 # cross-platform build script
 ├── python/
-│   ├── build_fortran_extension.py
 │   └── fracval/
 │       ├── desktop/             # PySide6 window, viewer and worker
 │       ├── engine.py
@@ -424,10 +433,9 @@ FracVAL-Qt/
 │       └── visualization.py
 ├── gui/                         # source-tree desktop launcher
 ├── tests/
-│   ├── run_tests.sh
 │   ├── monodisperse/
 │   ├── polydisperse/
-│   └── python/
+│   └── python/                  # pytest suite, incl. test_fortran_cli.py
 ├── plot/                        # scripts and Jupyter notebooks
 └── doc/
     ├── USAGE.md

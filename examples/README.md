@@ -4,11 +4,13 @@ These examples are intentionally small and are meant to be copied into another
 Python project. Install FracVAL first from the project root:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+conda env create -f environment.yml
+conda activate fracval
 python -m pip install -e .
-make python-ext PYTHON=python
+python tools/build.py ext
 ```
+
+Windows uses `environment-windows.yml` in place of `environment.yml`.
 
 Then run any example with the active environment:
 

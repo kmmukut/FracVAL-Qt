@@ -34,21 +34,36 @@ The project is distributed under the **GNU General Public License version 3
 | Python API | Scripts, notebooks, parameter sweeps, integration | `from fracval import generate` |
 | Fortran CLI | Traditional compiled workflows and batch jobs | `./build/fracval fracval.in` |
 
-## First installation on macOS/Linux
+## Installation (all platforms, conda/Miniforge)
 
-Requirements: Python 3.10+, GNU Fortran (`gfortran`), GNU Make, and a C compiler.
-On macOS, Homebrew's `gcc` package provides `gfortran`.
+Requirements: [Miniforge](https://github.com/conda-forge/miniforge) (or any
+conda), and `git`. The compilers come from conda-forge.
+
+macOS / Linux:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-make install-gui PYTHON=python
-make
-make qt-check PYTHON=python
-make gui-test PYTHON=python
-make test PYTHON=python
+conda env create -f environment.yml
+conda activate fracval
+python -m pip install -e ".[gui,dev]"
+python tools/build.py all
+python -m pytest
 ```
+
+Windows (Miniforge Prompt or PowerShell):
+
+```bat
+conda env create -f environment-windows.yml
+conda activate fracval
+python -m pip install -e ".[gui,dev]"
+python tools\build.py all
+python -m pytest
+```
+
+`tools/build.py all` compiles the standalone executable to `build/fracval`
+(`build\fracval.exe` on Windows) and the in-memory F2PY extension into
+`python/fracval/`. On Windows it uses the MinGW-w64 `gfortran`/`gcc` from
+conda-forge, links the GNU runtime statically, and verifies the extension
+imports before reporting success. MSVC is not supported for the extension.
 
 Then launch the desktop application:
 
@@ -56,24 +71,42 @@ Then launch the desktop application:
 fracval-gui
 ```
 
-or from the source tree:
+### Without conda (macOS/Linux)
+
+A plain virtual environment works when `gfortran`, a C compiler, and GNU Make
+are installed from the OS (Homebrew `gcc`, or `apt install gfortran gcc make`):
 
 ```bash
-make gui PYTHON=python
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[gui,dev]"
+make
+make python-ext PYTHON=python
+make test PYTHON=python
 ```
+
+The Makefile is a POSIX convenience wrapper around the same Python tooling;
+Windows users call `python tools\build.py` and `python -m pytest` directly.
+
+### Windows notes
+
+- Use the *Miniforge Prompt* (or a shell where `conda activate fracval` works)
+  so the MinGW toolchain from `gfortran_win-64` is on `PATH`.
+- `fracval-info` shows which `gfortran` and `gcc` were found. If it prints
+  `not found`, run `conda install -c conda-forge gfortran_win-64 gcc_win-64`.
+- WSL2 with the Linux instructions remains a fully supported alternative.
 
 ### Normal day-to-day GUI use
 
-After the first installation/build, you do **not** recompile for parameter
-changes:
+After the first build you do **not** recompile for parameter changes:
 
 ```bash
-cd /path/to/FracVAL-Qt
-source .venv/bin/activate
+conda activate fracval
 fracval-gui
 ```
 
-Rebuild only after changing Fortran source or changing Python environments.
+Rebuild with `python tools/build.py all` only after changing Fortran source or
+switching Python environments.
 
 ## Five-line Python example
 
@@ -152,6 +185,7 @@ FracVAL-Qt/
 ├── plot/                 standalone plotting script and notebooks
 ├── doc/                  Markdown guides + LaTeX/PDF user/developer manual
 ├── build/                generated compiler and documentation products
+├── tools/                cross-platform build script (tools/build.py)
 ├── Makefile
 ├── pyproject.toml
 └── fracval.in             default Fortran runtime namelist
@@ -163,7 +197,6 @@ FracVAL-Qt/
 - [`CITATION.cff`](CITATION.cff) / [`CITATION.md`](CITATION.md) - citation metadata
 - [`AUTHORS.md`](AUTHORS.md) - original authors and contributor policy
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - development and pull-request guidance
-- [`GITHUB_SETUP.md`](GITHUB_SETUP.md) - suggested repository description and first-push commands
 
 ## Documentation
 
@@ -191,17 +224,15 @@ make docs
 ## Common Make targets
 
 ```text
-make                 build standalone Fortran executable
-make install         install Python package + build F2PY extension
-make install-gui     install Python package + Qt dependencies + extension
-make python-ext      build/rebuild the in-memory Fortran extension
-make test            run scientific Fortran/Python regression tests
-make qt-check        inspect Qt platform plugins
-make gui-test        construct the Qt GUI in headless smoke-test mode
-make gui             launch the native GUI
-make docs            compile the LaTeX manual
-make info            show Python/backend diagnostics
-make clean           remove native build products
+python tools/build.py all    build executable + F2PY extension (all platforms)
+python tools/build.py exe    build only the standalone executable
+python tools/build.py ext    build only the F2PY extension
+python tools/build.py clean  remove native build products
+python -m pytest             run Fortran CLI, Python API, visualization, Qt-path tests
+fracval-info                 show Python/compiler/backend diagnostics
+fracval-qt-check             inspect Qt platform plugins
+make / make test / make gui  POSIX shortcuts for the commands above
+make docs                    compile the LaTeX manual
 ```
 
 ## Important model notes

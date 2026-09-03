@@ -17,39 +17,32 @@ turn calls the same Fortran PCA/CCA engine as the standalone executable.
 
 ## 2. First installation
 
-From the project root on macOS/Linux:
+From the project root, macOS / Linux:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-make install-gui PYTHON=python
-make
+conda env create -f environment.yml
+conda activate fracval
+python -m pip install -e ".[gui,dev]"
+python tools/build.py all
+python -m pytest
 ```
 
-On macOS, install GNU Fortran first if needed:
+Windows (Miniforge Prompt or PowerShell):
 
-```bash
-brew install gcc
+```bat
+conda env create -f environment-windows.yml
+conda activate fracval
+python -m pip install -e ".[gui,dev]"
+python tools\build.py all
+python -m pytest
 ```
 
-Verify the Python/native backends:
+Verify the installation:
 
 ```bash
 fracval-info
-```
-
-Verify Qt/PySide6:
-
-```bash
 fracval-qt-check
-make gui-test PYTHON=python
-```
-
-Run the scientific tests:
-
-```bash
-make test PYTHON=python
+python -m pytest
 ```
 
 ---
@@ -60,7 +53,7 @@ You do **not** rebuild FracVAL every time you change parameters.
 
 ```bash
 cd /path/to/FracVAL-Qt
-source .venv/bin/activate
+conda activate fracval
 fracval-gui
 ```
 
@@ -392,7 +385,7 @@ fig.savefig("aggregate.png", dpi=200)
 Build with:
 
 ```bash
-make python-ext PYTHON=python
+python tools/build.py ext
 ```
 
 Python calls the Fortran generator in memory and receives NumPy arrays directly.
@@ -405,7 +398,7 @@ use shared global state.
 Build with:
 
 ```bash
-make
+python tools/build.py exe
 ```
 
 The Python engine can run `build/fracval` through a temporary input/output
@@ -490,12 +483,12 @@ the public Python layer or Fortran core as appropriate.
 
 ---
 
-## 16. Common macOS Qt problem
+## 16. Common macOS/Windows Qt problems
 
 If Qt says it cannot find `cocoa` or a headless platform plugin:
 
 ```bash
-source .venv/bin/activate
+conda activate fracval
 which python
 python -c "import PySide6; print(PySide6.__file__)"
 fracval-qt-check
@@ -509,4 +502,10 @@ python -m pip install --no-cache-dir PySide6
 fracval-qt-check
 ```
 
-Avoid mixing a Conda `base` PySide6 with a different `.venv` Python.
+Avoid mixing a Conda `base` PySide6 with a different environment's Python.
+
+On Windows the expected desktop platform plugin is `windows`
+(`PySide6/plugins/platforms/qwindows.dll`). `fracval-qt-check` reports it.
+A leaked `QT_QPA_PLATFORM=offscreen` from a CI or WSL shell is overridden by
+the launcher, and conda Qt variables (`QT_PLUGIN_PATH`) are replaced by the
+PySide6 wheel's own plugin directory.

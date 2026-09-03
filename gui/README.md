@@ -7,13 +7,13 @@ an offline Plotly 3-D viewer with Qt WebEngine.
 From the project root:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+conda env create -f environment.yml
+conda activate fracval
 python -m pip install -e '.[gui]'
-make
-make python-ext PYTHON=python     # recommended in-memory backend
-make gui PYTHON=python
+python tools/build.py all
 ```
+
+Windows uses `environment-windows.yml` in place of `environment.yml`.
 
 You can also launch it after installation with:
 

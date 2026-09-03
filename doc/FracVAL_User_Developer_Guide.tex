@@ -249,7 +249,6 @@ FracVAL-Qt/
 |-- CITATION.cff
 |-- CITATION.md
 |-- CONTRIBUTING.md
-|-- GITHUB_SETUP.md
 |-- src/                       # Fortran source
 |   |-- Ctes.f90
 |   |-- Frac_VAL_CCA.f90
@@ -262,7 +261,6 @@ FracVAL-Qt/
 |   |-- Save_results_CC.f90
 |   `-- fracval_python_api.f90
 |-- python/
-|   |-- build_fortran_extension.py
 |   `-- fracval/
 |       |-- config.py
 |       |-- aggregate.py
@@ -271,6 +269,7 @@ FracVAL-Qt/
 |       |-- visualization.py
 |       |-- diagnostics.py
 |       `-- desktop/
+|-- tools/                     # cross-platform build script (tools/build.py)
 |-- gui/                       # source-tree GUI launcher
 |-- examples/                  # Python integration examples
 |-- tests/                     # Fortran, Python, Qt and model tests
@@ -325,7 +324,7 @@ Core generation needs:
   \item NumPy;
   \item GNU Fortran (\code{gfortran});
   \item a C compiler for the F2PY wrapper;
-  \item GNU Make for the supplied build commands.
+  \item GNU Make on macOS/Linux for the optional Makefile shortcuts; Windows uses the Python build script directly.
 \end{itemize}
 
 The native GUI additionally needs PySide6. Plotly is a base Python dependency
@@ -333,52 +332,69 @@ because it is used by the GUI viewer and public interactive plotting API.
 Static Matplotlib plotting and notebooks are available through the optional
 \code{plot} dependency group.
 
-\section{macOS}
+\section{All platforms: conda/Miniforge}
 
-Install GNU Fortran with Homebrew if it is not already available:
+The supported installation uses a conda-forge environment so the Fortran and C
+compilers, NumPy, and Python match on every operating system.
 
+macOS and Linux:
 \begin{lstlisting}[language=bash]
-brew install gcc
+conda env create -f environment.yml
+conda activate fracval
+python -m pip install -e ".[gui,dev]"
+python tools/build.py all
+python -m pytest
 \end{lstlisting}
 
-Then, from the project root:
+Windows (Miniforge Prompt):
+\begin{lstlisting}[language=bash]
+conda env create -f environment-windows.yml
+conda activate fracval
+python -m pip install -e ".[gui,dev]"
+python tools\build.py all
+python -m pytest
+\end{lstlisting}
 
+\code{tools/build.py all} compiles the standalone executable and the in-memory
+F2PY extension. On Windows it uses the MinGW-w64 GNU toolchain provided by the
+conda-forge packages \code{gfortran\_win-64} and \code{gcc\_win-64}, links the
+GNU runtime libraries statically, and imports the freshly built extension in a
+clean subprocess before reporting success. If that import needs the gfortran
+runtime DLLs, they are copied next to the extension automatically. MSVC is not
+supported for the extension because Fortran and C objects are linked by
+gfortran into one module.
+
+\begin{importantbox}
+Use the same Python interpreter for installing PySide6, building the
+extension, and launching the GUI. \code{fracval-info} prints the interpreter,
+the discovered compilers, and the available backends.
+\end{importantbox}
+
+\section{macOS and Linux without conda}
+
+With \code{gfortran}, a C compiler, and GNU Make from the operating system
+(Homebrew \code{gcc}; \code{apt install gfortran gcc make}), a plain virtual
+environment and the Makefile shortcuts work:
 \begin{lstlisting}[language=bash]
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-make install-gui PYTHON=python
+python -m pip install -e ".[gui,dev]"
 make
-make qt-check PYTHON=python
-make gui-test PYTHON=python
+make python-ext PYTHON=python
 make test PYTHON=python
 \end{lstlisting}
 
-\begin{importantbox}
-The virtual environment matters on macOS, particularly when Conda, Homebrew,
-and system Python installations coexist. After activation, verify
-\code{which python}. The same Python interpreter should be used for installing
-PySide6, building the F2PY extension, and launching the GUI.
-\end{importantbox}
+\section{Windows notes}
 
-\section{Linux}
-
-On Debian/Ubuntu-like systems, the native prerequisites are typically:
-
-\begin{lstlisting}[language=bash]
-sudo apt install gfortran make gcc
-\end{lstlisting}
-
-Then use the same virtual-environment and \code{make install-gui} sequence as
-on macOS.
-
-\section{Windows}
-
-The most predictable Fortran workflow is WSL/WSL2 using the Linux instructions.
-A native Windows build may be possible with a compatible MinGW/MSYS2 Fortran
-and C toolchain, but this source package is primarily structured and tested
-around POSIX-style build commands. Native Qt/PySide6 itself is cross-platform,
-but the F2PY native-link step must match the selected compiler and Python ABI.
+\begin{itemize}
+  \item Run commands from the Miniforge Prompt so the MinGW toolchain is on \code{PATH}.
+  \item \code{fracval-info} reports \code{not found} for a compiler when the
+        environment is incomplete; fix with
+        \code{conda install -c conda-forge gfortran\_win-64 gcc\_win-64}.
+  \item The standalone executable is \path{build\fracval.exe}. Namelist
+        \code{output\_dir} values may use forward or backward slashes.
+  \item WSL2 with the Linux instructions remains supported.
+\end{itemize}
 
 \section{Installation targets}
 
@@ -389,7 +405,9 @@ Command & Purpose \\
 \code{make install PYTHON=python} & Editable Python package installation plus local F2PY extension build. \\
 \code{make install-gui PYTHON=python} & Same, with PySide6 GUI dependencies. \\
 \code{make} & Build the standalone Fortran executable at \path{build/fracval}. \\
-\code{make python-ext PYTHON=python} & Rebuild only the in-memory F2PY extension. \\
+\code{python tools/build.py all} & Build executable and extension on any platform. \\
+\code{make python-ext PYTHON=python} & Rebuild only the F2PY extension (POSIX shortcut for \code{tools/build.py ext}). \\
+\code{python tools/build.py clean} & Remove native build products. \\
 \code{make clean} & Remove native compiler products and extension binaries. \\
 \bottomrule
 \end{longtable}
@@ -418,7 +436,8 @@ fracval-qt-check
 
 On macOS, the available platform plugins should include \code{cocoa}. The
 launcher explicitly configures Qt's platform-plugin path before constructing
-\code{QApplication} to avoid the common empty-plugin-path failure.
+\code{QApplication} to avoid the common empty-plugin-path failure. On Windows
+the expected plugin is \code{windows}.
 
 \chapter{Five-Minute Workflows}
 
@@ -428,7 +447,7 @@ After the first build:
 
 \begin{lstlisting}[language=bash]
 cd /path/to/FracVAL-Qt
-source .venv/bin/activate
+conda activate fracval
 fracval-gui
 \end{lstlisting}
 
@@ -1233,10 +1252,13 @@ tests compare the two for fixed-seed cases.
 \section{Core test command}
 
 \begin{lstlisting}[language=bash]
-make test PYTHON=python
+python -m pytest
 \end{lstlisting}
 
 This runs standalone Fortran cases plus Python/F2PY regression checks.
+\code{tests/python/test\_fortran\_cli.py} replaced the earlier shell harness
+(\code{tests/run\_tests.sh}), so the whole suite runs under \code{pytest} on
+every platform.
 
 \section{What the tests cover}
 
@@ -1265,13 +1287,26 @@ make qt-check PYTHON=python
 make gui-test PYTHON=python
 \end{lstlisting}
 
+or directly with pytest:
+
+\begin{lstlisting}[language=bash]
+FRACVAL_RUN_GUI_TESTS=1 python -m pytest tests/python/test_qt_gui.py
+\end{lstlisting}
+
 The GUI smoke test selects an available headless Qt platform plugin and
-constructs the application without requiring a visible display.
+constructs the application without requiring a visible display. It is opt-in
+and is not collected by a plain \code{python -m pytest} run.
 
 \section{Debug Fortran build}
 
 \begin{lstlisting}[language=bash]
 make debug
+\end{lstlisting}
+
+or, on any platform:
+
+\begin{lstlisting}[language=bash]
+python tools/build.py all --debug
 \end{lstlisting}
 
 This rebuilds with warnings, bounds/runtime checks, debug symbols, and
@@ -1371,19 +1406,27 @@ Check:
 \begin{lstlisting}[language=bash]
 which python
 python -c "import numpy; print(numpy.__version__)"
-which gfortran
-gfortran --version
+fracval-info
 \end{lstlisting}
 
-Then clean and rebuild:
+\code{fracval-info} reports the discovered Fortran and C compilers, so a
+missing or mismatched toolchain shows up directly. Then clean and rebuild:
 
 \begin{lstlisting}[language=bash]
-make clean
-make python-ext PYTHON=python
+python tools/build.py clean
+python tools/build.py ext
 \end{lstlisting}
 
 Because the extension ABI is Python/platform-specific, rebuild it after changing
 to a different Python installation or architecture.
+
+\section{Windows: \code{ImportError: DLL load failed} for the extension}
+
+The extension is linked with a static GNU runtime and verified at build time.
+If an import still fails, rebuild with \code{python tools/build.py ext} from
+the activated \code{fracval} environment; the build script copies
+\code{libgfortran-5.dll}, \code{libquadmath-0.dll}, \code{libgcc\_s\_seh-1.dll},
+and \code{libwinpthread-1.dll} beside the extension when they are needed.
 
 \section{Many \code{PC not able to continue} / restart messages}
 
@@ -1422,6 +1465,7 @@ Command & Purpose \\
 \code{fracval-python} & Generate one aggregate from command-line Python arguments. \\
 \code{fracval-info} & Report Python, package, extension and backend diagnostics. \\
 \code{fracval-qt-check} & Report Qt/PySide6 plugin paths and platform availability. \\
+\code{python tools/build.py} & Cross-platform build script (\code{exe}, \code{ext}, \code{all}, \code{clean}). \\
 \bottomrule
 \end{longtable}
 
@@ -1521,14 +1565,15 @@ Target & Action \\
 \code{make python-ext} & Build in-memory Fortran extension. \\
 \code{make fortran-test} & Run standalone cases. \\
 \code{make python-test} & Run Python scientific/visualization tests. \\
-\code{make test} & Run Fortran and Python tests. \\
+\code{make test} & Run the pytest suite. \\
 \code{make qt-check} & Diagnose Qt platform plugins. \\
 \code{make gui-test} & Headless Qt construction smoke test. \\
 \code{make gui} & Launch the native desktop application. \\
 \code{make plot-test} & Exercise static and interactive plotting. \\
 \code{make debug} & Rebuild Fortran with runtime checking. \\
 \code{make docs} & Compile this LaTeX manual to PDF. \\
-\code{make clean} & Remove native build artifacts. \\
+\code{make clean} & Remove native build artifacts (\code{tools/build.py clean}). \\
+\code{python tools/build.py all} & Build executable and extension on any platform. \\
 \bottomrule
 \end{longtable}
 

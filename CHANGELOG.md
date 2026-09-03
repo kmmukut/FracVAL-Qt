@@ -1,5 +1,29 @@
 # FracVAL-Qt changelog
 
+## 1.1.0 - 2026-09-03
+
+### Added
+
+- Native Windows support with a conda-forge MinGW-w64 toolchain (`environment-windows.yml`).
+- `tools/build.py`: one cross-platform command to build the standalone executable and the F2PY extension (`exe`, `ext`, `all`, `clean`), with a post-link import check and automatic gfortran runtime DLL fallback on Windows.
+- `environment.yml` for macOS/Linux conda users.
+- `fracval-info` now reports the discovered Fortran and C compilers.
+- GitHub Actions matrix on Ubuntu, macOS, and Windows.
+
+### Changed
+
+- All tests run under `pytest`; the Bash harness `tests/run_tests.sh` was replaced by `tests/python/test_fortran_cli.py`.
+- The Makefile is a POSIX convenience wrapper that delegates cross-platform steps to `tools/build.py` and `pytest`.
+- The Qt launcher pins the `windows` platform plugin on Windows, mirroring `cocoa` on macOS.
+- setuptools build output moved to `build/setuptools/`; built extensions are included in package-data.
+
+### Fixed
+
+- Output-directory creation from the Fortran executable now passes a native path to `cmd.exe`.
+- The executable backend no longer flashes a console window on Windows and creates its output directory before launching.
+- WebEngine viewer temp-directory cleanup cannot raise at exit on Windows.
+- Removed a dead `GITHUB_SETUP.md` link from the README.
+
 ## 1.0.1 - 2026-09-02
 
 ### Fixed

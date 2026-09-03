@@ -9,15 +9,18 @@ For development from a local clone:
 
 ```bash
 cd /path/to/FracVAL-Qt
-python3 -m venv .venv
-source .venv/bin/activate
-make install PYTHON=python
+conda env create -f environment.yml
+conda activate fracval
+python -m pip install -e .
+python tools/build.py ext
 ```
+
+Windows uses `environment-windows.yml` in place of `environment.yml`.
 
 For an application that also needs the desktop GUI:
 
 ```bash
-make install-gui PYTHON=python
+python -m pip install -e ".[gui]"
 ```
 
 The current source distribution builds the native F2PY extension locally. The

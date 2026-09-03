@@ -6,20 +6,20 @@ and GUI layers separated so changes remain testable and reproducible.
 ## Development setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
+conda env create -f environment.yml
+conda activate fracval
 python -m pip install -e '.[gui,dev,plot]'
-make
-make python-ext PYTHON=python
+python tools/build.py all
 ```
+
+Windows uses `environment-windows.yml` in place of `environment.yml`.
 
 ## Before opening a pull request
 
 Run the scientific regression suite:
 
 ```bash
-make test PYTHON=python
+python -m pytest
 ```
 
 If you changed Qt code, also run:
@@ -38,8 +38,8 @@ make docs
 If you changed Fortran numerics, a debug build is strongly recommended:
 
 ```bash
-make debug
-make test PYTHON=python
+python tools/build.py all --debug
+python -m pytest
 ```
 
 ## Design rules
