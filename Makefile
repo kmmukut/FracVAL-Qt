@@ -1,8 +1,10 @@
-# FracVAL build (POSIX convenience wrapper)
+# FracVAL build
 # The native rules below build build/fracval incrementally on macOS/Linux.
-# Cross-platform steps (F2PY extension, tests, clean) delegate to
-# tools/build.py and pytest, which are also the commands Windows users run
-# directly:  python tools/build.py all && python -m pytest
+# On Windows the executable build delegates to tools/build.py, which
+# discovers the conda-forge MinGW CRT search path; F2PY extension, tests,
+# and clean always delegate to tools/build.py and pytest, which are also
+# the commands Windows users can run directly:
+#   python tools/build.py all && python -m pytest
 
 FC = gfortran
 FFLAGS ?= -O2
@@ -11,7 +13,11 @@ PYTHON ?= python3
 
 SRC_DIR := src
 BUILD_DIR := build
+ifeq ($(OS),Windows_NT)
+TARGET := $(BUILD_DIR)/fracval.exe
+else
 TARGET := $(BUILD_DIR)/fracval
+endif
 
 OBJECTS := \
 	$(BUILD_DIR)/Ctes.o \
@@ -39,8 +45,13 @@ $(BUILD_DIR)/PCA_Subclusters_module.o: $(BUILD_DIR)/PCA_cca.o
 $(BUILD_DIR)/CCA_module.o: $(BUILD_DIR)/Ctes.o $(BUILD_DIR)/PCA_Subclusters_module.o $(BUILD_DIR)/Save_results_CC.o
 $(BUILD_DIR)/Frac_VAL_CCA.o: $(BUILD_DIR)/Ctes.o $(BUILD_DIR)/a_Random_PP.o $(BUILD_DIR)/RAND_SAMPLE.o $(BUILD_DIR)/CCA_module.o
 
+ifeq ($(OS),Windows_NT)
+$(TARGET):
+	$(PYTHON) tools/build.py exe --fc $(FC)
+else
 $(TARGET): $(OBJECTS)
 	$(FC) $(FFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
+endif
 
 run: $(TARGET)
 	$(TARGET) $(if $(INPUT),$(INPUT),fracval.in)

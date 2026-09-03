@@ -13,7 +13,7 @@
 ### Changed
 
 - All tests run under `pytest`; the Bash harness `tests/run_tests.sh` was replaced by `tests/python/test_fortran_cli.py`.
-- The Makefile is a POSIX convenience wrapper that delegates cross-platform steps to `tools/build.py` and `pytest`.
+- The Makefile delegates cross-platform steps to `tools/build.py` and `pytest`; on Windows the executable build itself also delegates to `tools/build.py exe`, which discovers the conda-forge MinGW CRT search path.
 - The Qt launcher pins the `windows` platform plugin on Windows, mirroring `cocoa` on macOS.
 - setuptools build output moved to `build/setuptools/`; built extensions are included in package-data.
 
@@ -22,11 +22,12 @@
 - Output-directory creation from the Fortran executable now passes a native path to `cmd.exe`.
 - The executable backend no longer flashes a console window on Windows and creates its output directory before launching.
 - WebEngine viewer temp-directory cleanup cannot raise at exit on Windows.
+- A PySide6 build without QtWebEngine (e.g. from conda-forge, or when an existing PySide6 already satisfied the requirement) now raises an actionable error naming the reinstall command instead of a bare `ModuleNotFoundError`.
 - Removed a dead `GITHUB_SETUP.md` link from the README.
 
 ### Known issues
 
-- The Windows CI job builds the standalone executable and the F2PY extension and runs the full pytest suite, and `fracval-qt-check` passes there too. The headless Qt GUI construction test is maintainer-machine verified on Windows instead, because the GitHub runner cannot import Qt from the pip PySide6 wheel inside a conda environment ("DLL load failed ... The specified procedure could not be found").
+- The Windows CI job builds the standalone executable and the F2PY extension and runs the full pytest suite, and `fracval-qt-check` passes there too. The headless Qt GUI construction test is non-fatal on that runner only, because its conda environment has a DLL clash with the pip PySide6 wheel ("DLL load failed ... The specified procedure could not be found"). On a normal Miniforge Windows install Qt imports correctly (`QtCore`, `QtGui`, and `QtWidgets` all load), and the GUI is maintainer-verified there.
 
 ## 1.0.1 - 2026-09-02
 
