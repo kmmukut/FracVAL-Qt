@@ -116,6 +116,43 @@ def extension_link_flags() -> list[str]:
     return ["-shared"]
 
 
+def _compiler_query(compiler: Path, flag: str) -> str:
+    """Ask a GCC driver a `-print-*` question; return the stripped stdout ('' on failure)."""
+    try:
+        proc = subprocess.run([str(compiler), flag], capture_output=True, text=True,
+                              timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    return proc.stdout.strip()
+
+
+def crt_search_flags(compiler: Path) -> list[str]:
+    """Windows: point the driver at the MinGW CRT when its own startfile search misses it.
+
+    conda-forge's MinGW toolchain installs crt2.o under
+    <sysroot>/usr/lib, but the driver only searches <sysroot>/lib, so the
+    link fails with "cannot find crt2.o". `-B` is required because crt2.o is
+    a startfile; `-L` alone does not affect startfile lookup.
+    """
+    if not IS_WINDOWS:
+        return []
+    resolved = _compiler_query(compiler, "-print-file-name=crt2.o")
+    if resolved and Path(resolved).is_absolute() and Path(resolved).is_file():
+        return []
+    candidates: list[Path] = []
+    sysroot = _compiler_query(compiler, "-print-sysroot")
+    if sysroot:
+        candidates += [Path(sysroot) / "usr" / "lib", Path(sysroot) / "lib"]
+    prefix = os.environ.get("CONDA_PREFIX")
+    if prefix:
+        base = Path(prefix) / "Library" / "x86_64-w64-mingw32" / "sysroot"
+        candidates += [base / "usr" / "lib", base / "lib"]
+    for directory in candidates:
+        if (directory / "crt2.o").is_file():
+            return [f"-B{directory}", f"-L{directory}"]
+    return []
+
+
 def python_import_library() -> Path | None:
     """CPython import library needed when MinGW links the extension on Windows."""
     if not IS_WINDOWS:
@@ -185,7 +222,8 @@ def build_executable(fc: Path, fflags: str, ldflags: str) -> Path:
     flags = fortran_flags(fflags, shared=False)
     objects = compile_fortran(fc, flags, EXE_SOURCES, EXE_OBJ)
     target = executable_path()
-    run([fc, *flags, *objects, *executable_link_flags(), *link_flags(ldflags), "-o", target])
+    run([fc, *flags, *crt_search_flags(fc), *objects, *executable_link_flags(),
+         *link_flags(ldflags), "-o", target])
     print(f"Built: {target.relative_to(ROOT)}")
     return target
 
@@ -250,7 +288,7 @@ def build_extension(fc: Path, cc: Path, fflags: str, ldflags: str) -> Path:
 
     target = extension_path()
     remove_existing_extension(target)
-    link = [fc, *extension_link_flags(), *objects]
+    link = [fc, *crt_search_flags(fc), *extension_link_flags(), *objects]
     import_library = python_import_library()
     if import_library is not None:
         link.append(import_library)

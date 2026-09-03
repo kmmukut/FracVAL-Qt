@@ -125,6 +125,64 @@ def test_cli_ldflags_default_reads_environment(build_tool, monkeypatch):
     assert captured["ldflags"] == "-L/opt/conda/lib -Wl,-rpath,/opt/conda/lib"
 
 
+def test_crt_search_flags_noop_off_windows(build_tool, monkeypatch):
+    monkeypatch.setattr(build_tool, "IS_WINDOWS", False)
+
+    def fail_if_called(compiler, flag):
+        raise AssertionError("_compiler_query must not run off Windows")
+
+    monkeypatch.setattr(build_tool, "_compiler_query", fail_if_called)
+    assert build_tool.crt_search_flags(Path("/usr/bin/gfortran")) == []
+
+
+def test_crt_search_flags_adds_b_and_l_when_unresolved(build_tool, tmp_path, monkeypatch):
+    monkeypatch.setattr(build_tool, "IS_WINDOWS", True)
+    libdir = tmp_path / "sysroot" / "usr" / "lib"
+    libdir.mkdir(parents=True)
+    (libdir / "crt2.o").write_bytes(b"x")
+
+    def fake_query(compiler, flag):
+        if flag == "-print-file-name=crt2.o":
+            return "crt2.o"
+        if flag == "-print-sysroot":
+            return str(tmp_path / "sysroot")
+        return ""
+
+    monkeypatch.setattr(build_tool, "_compiler_query", fake_query)
+    flags = build_tool.crt_search_flags(Path("x86_64-w64-mingw32-gfortran"))
+    assert flags == [f"-B{libdir}", f"-L{libdir}"]
+
+
+def test_crt_search_flags_noop_when_resolved(build_tool, tmp_path, monkeypatch):
+    monkeypatch.setattr(build_tool, "IS_WINDOWS", True)
+    resolved = tmp_path / "sysroot" / "lib" / "crt2.o"
+    resolved.parent.mkdir(parents=True)
+    resolved.write_bytes(b"x")
+
+    def fake_query(compiler, flag):
+        if flag == "-print-file-name=crt2.o":
+            return str(resolved)
+        return ""
+
+    monkeypatch.setattr(build_tool, "_compiler_query", fake_query)
+    assert build_tool.crt_search_flags(Path("x86_64-w64-mingw32-gfortran")) == []
+
+
+def test_crt_search_flags_noop_when_nothing_findable(build_tool, tmp_path, monkeypatch):
+    monkeypatch.setattr(build_tool, "IS_WINDOWS", True)
+    monkeypatch.delenv("CONDA_PREFIX", raising=False)
+
+    def fake_query(compiler, flag):
+        if flag == "-print-file-name=crt2.o":
+            return "crt2.o"
+        if flag == "-print-sysroot":
+            return str(tmp_path / "nonexistent-sysroot")
+        return ""
+
+    monkeypatch.setattr(build_tool, "_compiler_query", fake_query)
+    assert build_tool.crt_search_flags(Path("x86_64-w64-mingw32-gfortran")) == []
+
+
 def test_remove_existing_extension_reports_locked_file(build_tool, tmp_path, monkeypatch):
     target = tmp_path / "_fracval_fortran.pyd"
     target.write_bytes(b"z")
