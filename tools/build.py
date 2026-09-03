@@ -99,6 +99,11 @@ def c_flags(includes: list[str], *, bits: int = struct.calcsize("P") * 8) -> lis
     return flags
 
 
+def link_flags(base: str) -> list[str]:
+    """Extra linker flags (conda activation scripts export LDFLAGS)."""
+    return shlex.split(base)
+
+
 def executable_link_flags() -> list[str]:
     return ["-static"] if IS_WINDOWS else []
 
@@ -176,11 +181,11 @@ def compile_fortran(fc: Path, flags: list[str], sources: tuple[str, ...], objdir
     return objects
 
 
-def build_executable(fc: Path, fflags: str) -> Path:
+def build_executable(fc: Path, fflags: str, ldflags: str) -> Path:
     flags = fortran_flags(fflags, shared=False)
     objects = compile_fortran(fc, flags, EXE_SOURCES, EXE_OBJ)
     target = executable_path()
-    run([fc, *flags, *objects, *executable_link_flags(), "-o", target])
+    run([fc, *flags, *objects, *executable_link_flags(), *link_flags(ldflags), "-o", target])
     print(f"Built: {target.relative_to(ROOT)}")
     return target
 
@@ -218,7 +223,7 @@ def verify_extension_import(exclude_dirs: list[Path]) -> tuple[bool, str]:
     return proc.returncode == 0, (proc.stdout + proc.stderr).strip()
 
 
-def build_extension(fc: Path, cc: Path, fflags: str) -> Path:
+def build_extension(fc: Path, cc: Path, fflags: str, ldflags: str) -> Path:
     import numpy as np  # deferred so `exe` works in environments without NumPy
 
     shutil.rmtree(EXT_BUILD, ignore_errors=True)
@@ -249,6 +254,7 @@ def build_extension(fc: Path, cc: Path, fflags: str) -> Path:
     import_library = python_import_library()
     if import_library is not None:
         link.append(import_library)
+    link.extend(link_flags(ldflags))
     link.extend(["-o", target])
     run(link)
 
@@ -288,6 +294,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cc", help="C compiler (default: $CC, then gcc/clang on PATH)")
     parser.add_argument("--fflags", default=os.environ.get("FFLAGS", "-O2"),
                         help="Fortran optimisation/warning flags (default: $FFLAGS or -O2)")
+    parser.add_argument("--ldflags", default=os.environ.get("LDFLAGS", ""),
+                        help="extra linker flags (default: $LDFLAGS)")
     parser.add_argument("--debug", action="store_true", help=f"use '{DEBUG_FFLAGS}'")
     args = parser.parse_args(argv)
 
@@ -300,11 +308,11 @@ def main(argv: list[str] | None = None) -> int:
     fc = require(toolchain, "fortran")
     print(f"Fortran compiler: {fc.path} ({fc.version})")
     if args.command in ("exe", "all"):
-        build_executable(fc.path, fflags)
+        build_executable(fc.path, fflags, args.ldflags)
     if args.command in ("ext", "all"):
         cc = require(toolchain, "c")
         print(f"C compiler      : {cc.path} ({cc.version})")
-        build_extension(fc.path, cc.path, fflags)
+        build_extension(fc.path, cc.path, fflags, args.ldflags)
     return 0
 
 

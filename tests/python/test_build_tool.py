@@ -94,6 +94,37 @@ def test_copy_runtime_dlls_copies_only_present_files(build_tool, tmp_path):
     assert (dest / "libgfortran-5.dll").read_bytes() == b"x"
 
 
+def test_link_flags_empty_string_yields_empty_list(build_tool):
+    assert build_tool.link_flags("") == []
+
+
+def test_link_flags_splits_shell_style(build_tool):
+    assert build_tool.link_flags("-L/a -lb") == ["-L/a", "-lb"]
+
+
+def test_cli_ldflags_default_reads_environment(build_tool, monkeypatch):
+    monkeypatch.setenv("LDFLAGS", "-L/opt/conda/lib -Wl,-rpath,/opt/conda/lib")
+    captured: dict[str, str] = {}
+
+    def fake_build_executable(fc, fflags, ldflags):
+        captured["ldflags"] = ldflags
+        raise SystemExit(0)
+
+    fake_compiler = build_tool.Compiler("fortran", Path("/usr/bin/gfortran"), "fake 0.0")
+    fake_toolchain = type(
+        "FakeToolchain", (), {"fortran": fake_compiler, "c": None, "searched": ()}
+    )()
+    monkeypatch.setattr(build_tool, "build_executable", fake_build_executable)
+    monkeypatch.setattr(build_tool, "discover_toolchain", lambda fc=None, cc=None: fake_toolchain)
+
+    try:
+        build_tool.main(["exe"])
+    except SystemExit:
+        pass
+
+    assert captured["ldflags"] == "-L/opt/conda/lib -Wl,-rpath,/opt/conda/lib"
+
+
 def test_remove_existing_extension_reports_locked_file(build_tool, tmp_path, monkeypatch):
     target = tmp_path / "_fracval_fortran.pyd"
     target.write_bytes(b"z")

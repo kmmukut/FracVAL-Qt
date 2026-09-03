@@ -86,6 +86,24 @@ jobs:
       - name: Install FracVAL (editable) with GUI and dev extras
         run: python -m pip install -e ".[gui,dev]"
 
+      - name: Diagnose MinGW toolchain layout (temporary; remove once Windows CI is green)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        run: |
+          echo "FFLAGS=$FFLAGS"
+          echo "CFLAGS=$CFLAGS"
+          echo "LDFLAGS=$LDFLAGS"
+          echo "CONDA_PREFIX=$CONDA_PREFIX"
+          echo "--- locate crt2.o / default-manifest.o ---"
+          find "$CONDA_PREFIX" -name 'crt2.o' -o -name 'default-manifest.o' 2>/dev/null | head -20
+          echo "--- gcc's own search dirs ---"
+          x86_64-w64-mingw32-gcc -print-search-dirs | head -20
+          echo "--- libgcc / crt file lookup ---"
+          x86_64-w64-mingw32-gcc -print-file-name=crt2.o
+          x86_64-w64-mingw32-gcc -print-libgcc-file-name
+          echo "--- installed mingw/gcc packages ---"
+          conda list | grep -Ei 'mingw|gcc|gfortran|crt|binutils' || true
+
       - name: Build executable and F2PY extension
         run: python tools/build.py all
 
