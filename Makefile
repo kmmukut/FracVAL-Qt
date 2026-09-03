@@ -1,6 +1,8 @@
-# FracVAL build
-# Compiler-generated Fortran files stay in build/. The optional Python F2PY
-# extension is written into python/fracval/ and can be removed with make clean.
+# FracVAL build (POSIX convenience wrapper)
+# The native rules below build build/fracval incrementally on macOS/Linux.
+# Cross-platform steps (F2PY extension, tests, clean) delegate to
+# tools/build.py and pytest, which are also the commands Windows users run
+# directly:  python tools/build.py all && python -m pytest
 
 FC = gfortran
 FFLAGS ?= -O2
@@ -97,13 +99,10 @@ plot-test: fortran-test
 debug:
 	$(MAKE) clean
 	$(MAKE) FFLAGS='-O0 -g -Wall -Wextra -fcheck=all -fbacktrace' all
+	$(PYTHON) tools/build.py ext --fc $(FC) --debug
 
 clean:
-	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/*.mod $(TARGET) \
-		$(BUILD_DIR)/*.png $(BUILD_DIR)/*.html
-	rm -rf $(BUILD_DIR)/python_ext
-	rm -f python/fracval/_fracval_fortran*.so python/fracval/_fracval_fortran*.dylib python/fracval/_fracval_fortran*.pyd
-	@touch $(BUILD_DIR)/.gitkeep 2>/dev/null || true
+	$(PYTHON) tools/build.py clean
 
 help:
 	@echo "FracVAL targets:"
@@ -113,10 +112,10 @@ help:
 	@echo "  make install-gui  Install editable package with PySide6 + extension"
 	@echo "  make info         Show Python/backend diagnostics"
 	@echo "  make run INPUT=x  Run using input file x"
-	@echo "  make fortran-test Run mono/polydisperse standalone smoke tests"
-	@echo "  make python-ext   Build the in-memory Python/Fortran extension"
-	@echo "  make python-test  Test Python API + extension + visualization"
-	@echo "  make test         Run Fortran and Python tests"
+	@echo "  make python-ext   Build the Python/Fortran extension (tools/build.py ext)"
+	@echo "  make fortran-test Run the standalone smoke tests with pytest"
+	@echo "  make python-test  Run Python API, extension and visualization tests with pytest"
+	@echo "  make test         Run the whole pytest suite (Fortran CLI + Python)"
 	@echo "  make gui          Launch the native PySide6/Qt desktop GUI"
 	@echo "  make qt-check     Show PySide6/Qt plugin paths and available platforms"
 	@echo "  make gui-test     Smoke-test Qt GUI construction (requires PySide6)"
@@ -124,4 +123,5 @@ help:
 	@echo "  make docs         Build the LaTeX user/developer manual PDF"
 	@echo "  make docs-clean   Remove LaTeX build intermediates"
 	@echo "  make debug        Rebuild standalone generator with runtime checks"
-	@echo "  make clean        Remove compiler-generated files"
+	@echo "  make clean        Remove compiler-generated files (tools/build.py clean)"
+	@echo "Windows: run 'python tools/build.py all' and 'python -m pytest' directly."

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fracval-qt"
-version = "1.0.1"
+version = "1.1.0"
 description = "Modern Python API and native Qt GUI for the original FracVAL Fortran fractal aggregate generator"
 requires-python = ">=3.10"
 classifiers = [
@@ -36,7 +36,13 @@ package-dir = {"" = "python"}
 where = ["python"]
 
 [tool.setuptools.package-data]
-fracval = ["py.typed", "_fracval_fortran.pyf"]
+fracval = [
+  "py.typed",
+  "_fracval_fortran.pyf",
+  "_fracval_fortran*.so",
+  "_fracval_fortran*.pyd",
+  "*.dll",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
