@@ -109,13 +109,14 @@ def test_missing_qtwebengine_gives_actionable_import_error(monkeypatch):
     Simulated via builtins.__import__ so this passes on a machine (like this
     one) where QtWebEngine actually is installed.
 
-    PRECONDITION: This test requires PySide6 to be installed. It is skipped entirely
-    when PySide6 is unavailable.
+    PRECONDITION: This test requires Qt to load successfully. It is skipped entirely
+    when PySide6 is unavailable or when its DLLs cannot load (e.g., on Windows with
+    missing Qt runtime dependencies).
     """
-    pytest.importorskip(
-        "PySide6.QtCore",
-        reason="PySide6 is not installed, so fracval.desktop.viewer cannot be imported at all",
-    )
+    try:
+        import PySide6.QtCore  # noqa: F401
+    except ImportError as exc:
+        pytest.skip(f"PySide6.QtCore is not importable here: {exc}")
     real_import = builtins.__import__
 
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
