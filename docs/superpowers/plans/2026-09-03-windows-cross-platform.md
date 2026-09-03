@@ -59,7 +59,7 @@
 
 **Files:** none committed.
 
-- [ ] **Step 1: Install pytest into the testbed env and confirm the baseline builds**
+- [x] **Step 1: Install pytest into the testbed env and confirm the baseline builds**
 
 Run:
 ```bash
@@ -71,7 +71,7 @@ $PYTHON -m fracval.diagnostics
 ```
 Expected: `pytest` installs; `build/fracval` links; `python/fracval/_fracval_fortran.cpython-313-darwin.so` is rebuilt; diagnostics show `Available backends  : extension, executable`.
 
-- [ ] **Step 2: Record the baseline fixed-seed outputs**
+- [x] **Step 2: Record the baseline fixed-seed outputs**
 
 Run:
 ```bash
@@ -93,7 +93,7 @@ Expected: `All FracVAL smoke tests passed.` The copies are compared against outp
 **Interfaces:**
 - Produces: conda env name `fracval` used by all later docs and CI steps.
 
-- [ ] **Step 1: Write `environment.yml`**
+- [x] **Step 1: Write `environment.yml`**
 
 ```yaml
 # FracVAL-Qt development environment for macOS and Linux.
@@ -117,7 +117,7 @@ dependencies:
       - PySide6>=6.6
 ```
 
-- [ ] **Step 2: Write `environment-windows.yml`**
+- [x] **Step 2: Write `environment-windows.yml`**
 
 ```yaml
 # FracVAL-Qt development environment for Windows (Miniforge/conda).
@@ -142,7 +142,7 @@ dependencies:
       - PySide6>=6.6
 ```
 
-- [ ] **Step 3: Add a probe job to CI**
+- [x] **Step 3: Add a probe job to CI**
 
 Replace `.github/workflows/ci.yml` with:
 
@@ -223,19 +223,19 @@ jobs:
           python -c "import numpy, plotly, PySide6; print(numpy.__version__, plotly.__version__, PySide6.__version__)"
 ```
 
-- [ ] **Step 4: Validate YAML locally**
+- [x] **Step 4: Validate YAML locally**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -c "import yaml,sys; [yaml.safe_load(open(f)) for f in ('environment.yml','environment-windows.yml','.github/workflows/ci.yml')]; print('ok')"`
 Expected: `ok` (if PyYAML is missing, `pip install pyyaml` into testbed first).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add environment.yml environment-windows.yml .github/workflows/ci.yml
 git commit -m "Add conda environment files and a three-OS toolchain probe job"
 ```
 
-- [ ] **Step 6: Verify the probe on GitHub**
+- [x] **Step 6: Verify the probe on GitHub** (superseded: the standalone probe job was replaced by the full three-OS CI matrix in Task 10, which went green and confirmed `gfortran_win-64` and `gcc_win-64` are correct — no fallback package names were needed)
 
 Ask the maintainer to push (or push if they have said to). Open the Actions run and confirm the `windows-latest` probe prints a `GNU Fortran (...)` line and a `gcc (...)` line. If `gcc_win-64` is reported as an unknown package, replace it in `environment-windows.yml` with `mingw-w64-ucrt-x86_64-gcc` and re-run; if `gfortran_win-64` is unknown, use `m2w64-gcc-fortran` and `m2w64-gcc`. Record the final package names in the spec's section 9 item 1 and commit that edit.
 
@@ -257,7 +257,7 @@ Ask the maintainer to push (or push if they have said to). Open the Actions run 
   - `fracval._toolchain.install_hint() -> str`
   - `fracval._toolchain.is_msvc(compiler: Compiler) -> bool`
 
-- [ ] **Step 1: Add pytest configuration to `pyproject.toml`**
+- [x] **Step 1: Add pytest configuration to `pyproject.toml`**
 
 Append to `pyproject.toml`:
 
@@ -268,7 +268,7 @@ pythonpath = ["python"]
 addopts = "-ra"
 ```
 
-- [ ] **Step 2: Write `tests/python/conftest.py`**
+- [x] **Step 2: Write `tests/python/conftest.py`**
 
 ```python
 """pytest configuration shared by the FracVAL Python tests."""
@@ -303,7 +303,7 @@ def build_tool():
     return module
 ```
 
-- [ ] **Step 3: Write the failing tests `tests/python/test_toolchain.py`**
+- [x] **Step 3: Write the failing tests `tests/python/test_toolchain.py`**
 
 ```python
 from __future__ import annotations
@@ -382,12 +382,12 @@ def test_is_msvc_detects_cl(tmp_path):
     assert _toolchain.is_msvc(gcc) is False
 ```
 
-- [ ] **Step 4: Run the tests to verify they fail**
+- [x] **Step 4: Run the tests to verify they fail**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_toolchain.py -v`
 Expected: collection error `ModuleNotFoundError: No module named 'fracval._toolchain'`.
 
-- [ ] **Step 5: Write `python/fracval/_toolchain.py`**
+- [x] **Step 5: Write `python/fracval/_toolchain.py`**
 
 ```python
 """Compiler discovery shared by tools/build.py and fracval-info.
@@ -502,12 +502,12 @@ def install_hint() -> str:
     return "conda install -c conda-forge gfortran c-compiler   (or: sudo apt install gfortran gcc)"
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_toolchain.py -v`
 Expected: 6 passed.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add pyproject.toml python/fracval/_toolchain.py tests/python/conftest.py tests/python/test_toolchain.py
@@ -526,7 +526,7 @@ git commit -m "Add stdlib compiler discovery module and pytest configuration"
 - Consumes: `fracval._toolchain.discover_toolchain`, `install_hint`.
 - Produces: `runtime_info()` gains keys `fortran_compiler` and `c_compiler`, each `None` or `{"path": str, "version": str}`.
 
-- [ ] **Step 1: Write the failing test `tests/python/test_diagnostics.py`**
+- [x] **Step 1: Write the failing test `tests/python/test_diagnostics.py`**
 
 ```python
 from __future__ import annotations
@@ -555,12 +555,12 @@ def test_format_mentions_compilers_and_hint_when_missing(monkeypatch):
     assert "conda install" in text
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_diagnostics.py -v`
 Expected: both FAIL (`KeyError`/assertion on missing keys and text).
 
-- [ ] **Step 3: Update `python/fracval/diagnostics.py`**
+- [x] **Step 3: Update `python/fracval/diagnostics.py`**
 
 Replace the file with:
 
@@ -636,12 +636,12 @@ def main() -> None:
     print(format_runtime_info())
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_diagnostics.py -v && /Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m fracval.diagnostics`
 Expected: 2 passed; the printout shows the Homebrew gfortran path and clang/gcc.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add python/fracval/diagnostics.py tests/python/test_diagnostics.py
@@ -668,7 +668,7 @@ git commit -m "Report discovered Fortran and C compilers in fracval-info"
   - `verification_env(exclude_dirs: list[Path]) -> dict[str, str]`
   - `main(argv: list[str] | None = None) -> int` (subcommands filled in by Task 5)
 
-- [ ] **Step 1: Write the failing tests `tests/python/test_build_tool.py`**
+- [x] **Step 1: Write the failing tests `tests/python/test_build_tool.py`**
 
 ```python
 from __future__ import annotations
@@ -755,12 +755,12 @@ def test_cli_rejects_unknown_command(build_tool, capsys):
         raise AssertionError("argparse should reject unknown commands")
 ```
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_build_tool.py -v`
 Expected: all skipped or errored with `tools/build.py not present`.
 
-- [ ] **Step 3: Write `tools/build.py` (rules and CLI skeleton; subcommand bodies arrive in Task 5)**
+- [x] **Step 3: Write `tools/build.py` (rules and CLI skeleton; subcommand bodies arrive in Task 5)**
 
 ```python
 #!/usr/bin/env python3
@@ -954,12 +954,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run to verify they pass**
+- [x] **Step 4: Run to verify they pass**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_build_tool.py -v`
 Expected: 7 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/build.py tests/python/test_build_tool.py
@@ -978,7 +978,7 @@ git commit -m "Add tools/build.py platform rules with tests"
 **Interfaces:**
 - Produces: `compile_fortran(fc, flags, sources, objdir) -> list[Path]`, `verify_extension_import(exclude_dirs) -> tuple[bool, str]`, `copy_runtime_dlls(compiler_dir: Path, dest: Path) -> list[Path]`, `remove_existing_extension(target: Path) -> None`.
 
-- [ ] **Step 1: Add failing tests to `tests/python/test_build_tool.py`**
+- [x] **Step 1: Add failing tests to `tests/python/test_build_tool.py`**
 
 Append:
 
@@ -1011,12 +1011,12 @@ def test_remove_existing_extension_reports_locked_file(build_tool, tmp_path, mon
         raise AssertionError("locked extension should produce a SystemExit with guidance")
 ```
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_build_tool.py -v -k "runtime_dlls or locked"`
 Expected: 2 failed with `AttributeError` (functions missing).
 
-- [ ] **Step 3: Replace the subcommand section of `tools/build.py`**
+- [x] **Step 3: Replace the subcommand section of `tools/build.py`**
 
 Replace everything from `# ---------- subcommands (bodies added in Task 5) ----------` up to (not including) `def main(` with:
 
@@ -1140,7 +1140,7 @@ def clean() -> None:
 
 ```
 
-- [ ] **Step 4: Rewrite `python/build_fortran_extension.py` as a shim**
+- [x] **Step 4: Rewrite `python/build_fortran_extension.py` as a shim**
 
 ```python
 #!/usr/bin/env python3
@@ -1157,12 +1157,12 @@ sys.argv = [sys.argv[0], "ext", *sys.argv[1:]]
 runpy.run_path(str(Path(__file__).resolve().parents[1] / "tools" / "build.py"), run_name="__main__")
 ```
 
-- [ ] **Step 5: Run the unit tests**
+- [x] **Step 5: Run the unit tests**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_build_tool.py -v`
 Expected: 9 passed.
 
-- [ ] **Step 6: Build everything with the new tool on macOS**
+- [x] **Step 6: Build everything with the new tool on macOS**
 
 Run:
 ```bash
@@ -1175,12 +1175,12 @@ $PYTHON tests/python/test_python_api.py
 ```
 Expected: `Built: build/fracval`, `Built: python/fracval/_fracval_fortran.cpython-313-darwin.so` (twice, once via the shim), diagnostics list both backends, the API test prints only `PASS` lines. `build/obj/` now holds the executable's objects; `build/*.o` from the Makefile are gone after `clean`.
 
-- [ ] **Step 7: Confirm the Makefile still builds independently**
+- [x] **Step 7: Confirm the Makefile still builds independently**
 
 Run: `make && ls -la build/fracval`
 Expected: Makefile compiles into `build/*.o` and relinks `build/fracval` without touching `build/obj/`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add tools/build.py python/build_fortran_extension.py tests/python/test_build_tool.py
@@ -1199,7 +1199,7 @@ git commit -m "Implement exe/ext/clean subcommands in tools/build.py with a post
 **Interfaces:**
 - Produces: `fracval.engine._subprocess_kwargs() -> dict[str, int]` (empty on POSIX; `{"creationflags": CREATE_NO_WINDOW}` on Windows).
 
-- [ ] **Step 1: Write the failing tests `tests/python/test_engine_executable.py`**
+- [x] **Step 1: Write the failing tests `tests/python/test_engine_executable.py`**
 
 ```python
 from __future__ import annotations
@@ -1242,12 +1242,12 @@ def test_executable_backend_creates_output_dir_before_running(tmp_path, monkeypa
     assert seen["exists"] is True
 ```
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_engine_executable.py -v`
 Expected: 2 fail with `AttributeError: _subprocess_kwargs`; the third fails on `seen["exists"] is True`.
 
-- [ ] **Step 3: Update `python/fracval/engine.py`**
+- [x] **Step 3: Update `python/fracval/engine.py`**
 
 Add `import sys` to the imports. Add this function after `_namelist`:
 
@@ -1288,7 +1288,7 @@ with
             )
 ```
 
-- [ ] **Step 4: Update `ensure_output_directory` in `src/Ctes.f90`**
+- [x] **Step 4: Update `ensure_output_directory` in `src/Ctes.f90`**
 
 Replace the subroutine with:
 
@@ -1322,7 +1322,7 @@ Replace the subroutine with:
     end subroutine ensure_output_directory
 ```
 
-- [ ] **Step 5: Run tests, rebuild both artifacts, and check geometry is unchanged**
+- [x] **Step 5: Run tests, rebuild both artifacts, and check geometry is unchanged**
 
 Run:
 ```bash
@@ -1336,7 +1336,7 @@ $PYTHON tests/python/test_python_api.py
 ```
 Expected: 3 passed; both `cmp` commands print nothing (identical); API test all `PASS`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/Ctes.f90 python/fracval/engine.py tests/python/test_engine_executable.py
@@ -1355,7 +1355,7 @@ git commit -m "Windows-safe output directory creation and hidden console for the
 **Interfaces:**
 - Produces: `fracval.desktop.qt_runtime.desktop_platform() -> str | None` returning `"cocoa"` on macOS, `"windows"` on Windows, `None` elsewhere. `configure_qt_runtime(headless=False)` sets `QT_QPA_PLATFORM` to that value when the plugin exists.
 
-- [ ] **Step 1: Rewrite `tests/python/test_qt_runtime_paths.py` as pytest tests (failing ones included)**
+- [x] **Step 1: Rewrite `tests/python/test_qt_runtime_paths.py` as pytest tests (failing ones included)**
 
 ```python
 from __future__ import annotations
@@ -1466,12 +1466,12 @@ if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))
 ```
 
-- [ ] **Step 2: Run to verify the new cases fail**
+- [x] **Step 2: Run to verify the new cases fail**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_qt_runtime_paths.py -v`
 Expected: `test_windows_site_packages_fallback_is_searched`, `test_desktop_platform_per_os`, and `test_configure_pins_windows_platform` fail; the rest pass.
 
-- [ ] **Step 3: Update `python/fracval/desktop/qt_runtime.py`**
+- [x] **Step 3: Update `python/fracval/desktop/qt_runtime.py`**
 
 In `_candidate_pyside_dirs`, replace the final loop with:
 
@@ -1519,7 +1519,7 @@ In `main()`, replace `expected = "cocoa" if sys.platform == "darwin" else None` 
 
 Update the module docstring's second paragraph to read: "Some macOS and Windows Python environments (notably Conda/venv combinations or shells carrying Qt environment variables) can leave Qt with an empty or incompatible plugin search path."
 
-- [ ] **Step 4: Update `python/fracval/desktop/viewer.py`**
+- [x] **Step 4: Update `python/fracval/desktop/viewer.py`**
 
 Replace `self._tmp = tempfile.TemporaryDirectory(prefix="fracval-viewer-")` with:
 
@@ -1529,7 +1529,7 @@ Replace `self._tmp = tempfile.TemporaryDirectory(prefix="fracval-viewer-")` with
         self._tmp = tempfile.TemporaryDirectory(prefix="fracval-viewer-", ignore_cleanup_errors=True)
 ```
 
-- [ ] **Step 5: Run the tests, the runtime check, and the GUI smoke test**
+- [x] **Step 5: Run the tests, the runtime check, and the GUI smoke test**
 
 Run:
 ```bash
@@ -1540,7 +1540,7 @@ make gui-test PYTHON=$PYTHON
 ```
 Expected: 8 passed; `Qt runtime check passed.` with `Selected QPA platform : cocoa`; GUI smoke test prints `PASS: native Qt GUI constructs successfully (platform=offscreen, ...)`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add python/fracval/desktop/qt_runtime.py python/fracval/desktop/viewer.py tests/python/test_qt_runtime_paths.py
@@ -1560,7 +1560,7 @@ git commit -m "Pin the Windows QPA platform, search Lib/site-packages, and toler
 **Interfaces:**
 - Consumes: `fracval.engine._find_executable(executable, required=False)`.
 
-- [ ] **Step 1: Write `tests/python/test_fortran_cli.py`**
+- [x] **Step 1: Write `tests/python/test_fortran_cli.py`**
 
 ```python
 """Standalone-executable smoke tests (port of the former tests/run_tests.sh).
@@ -1646,7 +1646,7 @@ if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))
 ```
 
-- [ ] **Step 2: Run the new file against the current build and compare with the Bash harness**
+- [x] **Step 2: Run the new file against the current build and compare with the Bash harness**
 
 Run:
 ```bash
@@ -1656,7 +1656,7 @@ bash tests/run_tests.sh
 ```
 Expected: 4 passed, and the Bash harness still passes on the same binary (both agree before the shell script is deleted).
 
-- [ ] **Step 3: Restructure `tests/python/test_python_api.py` into pytest functions**
+- [x] **Step 3: Restructure `tests/python/test_python_api.py` into pytest functions**
 
 Keep the imports, `ROOT`, `sys.path` insert, and `geometric_pair_overlaps` unchanged. Replace `def main()` and the `__main__` block with:
 
@@ -1769,7 +1769,7 @@ from fracval.engine import _find_executable, extension_available  # noqa: E402
 
 (`os` and `tempfile` are no longer needed.)
 
-- [ ] **Step 4: Restructure `tests/python/test_visualization.py`**
+- [x] **Step 4: Restructure `tests/python/test_visualization.py`**
 
 Replace `def main()` and the `__main__` block with:
 
@@ -1815,7 +1815,7 @@ if __name__ == "__main__":
 
 Add `import pytest` and `from fracval.engine import extension_available` to the imports.
 
-- [ ] **Step 5: Make `tests/python/test_qt_gui.py` a pytest test while keeping the script form**
+- [x] **Step 5: Make `tests/python/test_qt_gui.py` a pytest test while keeping the script form**
 
 Replace `def main()` and the `__main__` block with:
 
@@ -1843,7 +1843,7 @@ if __name__ == "__main__":
     test_main_window_constructs_headless()
 ```
 
-- [ ] **Step 6: Delete the Bash harness and point the Makefile at pytest**
+- [x] **Step 6: Delete the Bash harness and point the Makefile at pytest**
 
 ```bash
 git rm tests/run_tests.sh
@@ -1869,7 +1869,7 @@ gui-test:
 		$(PYTHON) -m pytest tests/python/test_qt_gui.py -s
 ```
 
-- [ ] **Step 7: Run the full suite both ways**
+- [x] **Step 7: Run the full suite both ways**
 
 Run:
 ```bash
@@ -1881,7 +1881,7 @@ $PYTHON tests/python/test_python_api.py
 ```
 Expected: `pytest` reports all tests passed with `test_qt_gui.py` not collected; `make test` passes; `make gui-test` prints the PASS line; the direct script run passes too.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add tests/python Makefile
@@ -1899,7 +1899,7 @@ git commit -m "Port the Fortran smoke tests to pytest and make every Python test
 - Modify: `Makefile` (`clean`, `debug`, `help`, header comment)
 - Create: `tests/python/test_packaging.py`
 
-- [ ] **Step 1: Write the failing test `tests/python/test_packaging.py`**
+- [x] **Step 1: Write the failing test `tests/python/test_packaging.py`**
 
 ```python
 from __future__ import annotations
@@ -1940,12 +1940,12 @@ def test_setuptools_build_dir_is_separated():
     assert "build_base = build/setuptools" in text
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -m pytest tests/python/test_packaging.py -v`
 Expected: 3 failed.
 
-- [ ] **Step 3: Update `pyproject.toml`**
+- [x] **Step 3: Update `pyproject.toml`**
 
 Change `version = "1.0.1"` to `version = "1.1.0"` and replace the package-data block with:
 
@@ -1960,7 +1960,7 @@ fracval = [
 ]
 ```
 
-- [ ] **Step 4: Create `setup.cfg`**
+- [x] **Step 4: Create `setup.cfg`**
 
 ```ini
 # Keep setuptools' own build output out of the Fortran build directory.
@@ -1968,12 +1968,12 @@ fracval = [
 build_base = build/setuptools
 ```
 
-- [ ] **Step 5: Bump the other two version strings**
+- [x] **Step 5: Bump the other two version strings**
 
 `python/fracval/__init__.py`: `__version__ = "1.1.0"`.
 `CITATION.cff`: `version: 1.1.0`.
 
-- [ ] **Step 6: Update the Makefile `clean`, `debug`, header, and `help`**
+- [x] **Step 6: Update the Makefile `clean`, `debug`, header, and `help`**
 
 Replace the header comment with:
 
@@ -2012,7 +2012,7 @@ In `help`, change these lines:
 	@echo "Windows: run 'python tools/build.py all' and 'python -m pytest' directly."
 ```
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 Run:
 ```bash
@@ -2024,7 +2024,7 @@ $PYTHON -m pip install -e '.[gui,dev]' >/dev/null && $PYTHON -c "import fracval;
 ```
 Expected: 3 passed; after `clean`, `build/` holds only `.gitkeep`, `README.md`, and `docs/` (if present); the rebuild plus `pytest` pass; the reinstall prints `1.1.0`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add pyproject.toml setup.cfg python/fracval/__init__.py CITATION.cff Makefile tests/python/test_packaging.py
@@ -2038,7 +2038,7 @@ git commit -m "Version 1.1.0: ship built extension in package-data, isolate setu
 **Files:**
 - Modify: `.github/workflows/ci.yml` (replace the probe job)
 
-- [ ] **Step 1: Replace the `conda-toolchain-probe` job with `conda-matrix`**
+- [x] **Step 1: Replace the `conda-toolchain-probe` job with `conda-matrix`**
 
 ```yaml
   conda-matrix:
@@ -2117,7 +2117,7 @@ Also change the `linux-apt` job's last two steps to:
         run: python -m pytest --ignore=tests/python/test_qt_gui.py
 ```
 
-- [ ] **Step 2: Validate the YAML and commit**
+- [x] **Step 2: Validate the YAML and commit**
 
 Run: `/Volumes/Mukut/Tweaks/Python_ENVs/testbed/bin/python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml')); print('ok')"`
 Expected: `ok`.
@@ -2127,7 +2127,7 @@ git add .github/workflows/ci.yml
 git commit -m "CI: build and test on Ubuntu, macOS, and Windows with Miniforge"
 ```
 
-- [ ] **Step 3: Verify on GitHub and iterate**
+- [x] **Step 3: Verify on GitHub and iterate** (the actual iterations were not the ones predicted here — see spec section 9 for the real fixes: the `crt2.o` search-path gap in `tools/build.py`, and the runner-only QtWebEngine/ICU DLL clash that made the GUI smoke test non-fatal on Windows)
 
 Ask the maintainer to push. For each failing platform step, fix the cause in the relevant file and commit (do not weaken assertions). Known likely iterations, in order of probability:
 1. `-static-libquadmath` unknown to the conda gfortran: remove it from `extension_link_flags()` and its test assertion; the DLL-copy fallback covers quadmath.
@@ -2144,7 +2144,7 @@ The task is complete when the `windows-latest` job is green through `Run the pyt
 - Modify: `README.md`, `doc/USAGE.md`, `doc/PYTHON_GUI.md`, `doc/INTEGRATION.md`, `doc/README.md`, `CONTRIBUTING.md`, `gui/README.md`, `examples/README.md`, `tests/README.md`, `build/README.md`, `CHANGELOG.md`, `doc/FracVAL_User_Developer_Guide.tex`
 - Regenerate: `doc/FracVAL_User_Developer_Guide.pdf`
 
-- [ ] **Step 1: README install section**
+- [x] **Step 1: README install section**
 
 Replace the section from `## First installation on macOS/Linux` through the end of `### Normal day-to-day GUI use` with:
 
@@ -2238,7 +2238,7 @@ make / make test / make gui  POSIX shortcuts for the commands above
 make docs                    compile the LaTeX manual
 ```
 
-- [ ] **Step 2: `doc/USAGE.md`**
+- [x] **Step 2: `doc/USAGE.md`**
 
 In section 2 replace the paragraph starting "The supplied Makefile and test script are designed for Linux, macOS, WSL" with:
 
@@ -2264,7 +2264,7 @@ python tools/build.py clean
 
 In section 5 add `build\fracval.exe fracval.in` as the Windows form after `./build/fracval`. In section 7 replace the harness description with: the tests are `tests/python/test_fortran_cli.py`, run with `python -m pytest tests/python/test_fortran_cli.py` (or `make fortran-test`), and the bullet list of checks stays. Delete the two sentences about Bash 3.2. In section 9 replace `build_fortran_extension.py` with `tools/build.py` (add a `tools/` entry, keep the shim unmentioned).
 
-- [ ] **Step 3: `doc/PYTHON_GUI.md`**
+- [x] **Step 3: `doc/PYTHON_GUI.md`**
 
 Replace section 2 ("First installation") with the conda flow from the README (both OS blocks) followed by the same three verification commands (`fracval-info`, `fracval-qt-check`, `python -m pytest`). In section 3 replace `source .venv/bin/activate` with `conda activate fracval`. In section 12 replace `make python-ext PYTHON=python` with `python tools/build.py ext` and `make` with `python tools/build.py exe`. Rename section 16 to "Common macOS/Windows Qt problems" and append:
 
@@ -2276,7 +2276,7 @@ the launcher, and conda Qt variables (`QT_PLUGIN_PATH`) are replaced by the
 PySide6 wheel's own plugin directory.
 ```
 
-- [ ] **Step 4: Smaller docs**
+- [x] **Step 4: Smaller docs**
 
 - `doc/INTEGRATION.md` section 1: replace the venv block with `conda env create -f environment.yml` / `conda activate fracval` / `python -m pip install -e .` / `python tools/build.py ext`, and note Windows uses `environment-windows.yml`.
 - `CONTRIBUTING.md`: replace the setup block with the conda flow and `python tools/build.py all`; replace `make test PYTHON=python` with `python -m pytest`; replace `make debug` with `python tools/build.py all --debug`.
@@ -2285,7 +2285,7 @@ PySide6 wheel's own plugin directory.
 - `build/README.md`: add "`tools/build.py` writes executable objects to `build/obj/` and extension intermediates to `build/python_ext/`; setuptools uses `build/setuptools/`."
 - `doc/README.md`: no change needed beyond mentioning `environment.yml` in the provenance paragraph is unnecessary; leave as is.
 
-- [ ] **Step 5: LaTeX manual**
+- [x] **Step 5: LaTeX manual**
 
 In `doc/FracVAL_User_Developer_Guide.tex`:
 
@@ -2378,7 +2378,7 @@ and \code{libwinpthread-1.dll} beside the extension when they are needed.
 
 10. In the command tables (lines 1420-1430 and 1515-1535) add `\code{python tools/build.py}` rows and update `make test` to "Run the pytest suite".
 
-- [ ] **Step 6: `CHANGELOG.md`**
+- [x] **Step 6: `CHANGELOG.md`**
 
 Insert above `## 1.0.1`:
 
@@ -2408,7 +2408,7 @@ Insert above `## 1.0.1`:
 - Removed a dead `GITHUB_SETUP.md` link from the README.
 ```
 
-- [ ] **Step 7: Rebuild the manual and check for stale references**
+- [x] **Step 7: Rebuild the manual and check for stale references**
 
 Run:
 ```bash
@@ -2417,7 +2417,7 @@ grep -rn "run_tests.sh\|build_fortran_extension\|GITHUB_SETUP" README.md doc/*.m
 ```
 Expected: `doc/FracVAL_User_Developer_Guide.pdf` is regenerated without LaTeX errors; grep returns no matches.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add README.md doc CONTRIBUTING.md gui/README.md examples/README.md tests/README.md build/README.md CHANGELOG.md
@@ -2428,7 +2428,7 @@ git commit -m "Docs: conda-first installation for macOS, Linux, and Windows; 1.1
 
 ## Completion checklist
 
-- [ ] `python -m pytest` passes on the maintainer's macOS machine with the extension and executable built by `tools/build.py all`.
-- [ ] Baseline `.dat` files from Task 0 are byte-identical to the post-change outputs (Task 6 step 5).
-- [ ] The `windows-latest` CI job is green through the pytest step; the maintainer has launched `fracval-gui` on Windows.
-- [ ] Spec section 9 items are resolved and recorded in the spec.
+- [x] `python -m pytest` passes on the maintainer's macOS machine with the extension and executable built by `tools/build.py all`.
+- [x] Baseline `.dat` files from Task 0 are byte-identical to the post-change outputs (Task 6 step 5).
+- [x] The `windows-latest` CI job is green through the pytest step; the maintainer ran `fracval-gui` on Windows and hit a PySide6 build lacking QtWebEngine — an environment issue, since fixed by an actionable error message and the pip-wheel install instructions. Qt itself (QtCore, QtGui, QtWidgets) imported correctly on that machine.
+- [x] Spec section 9 items are resolved and recorded in the spec.

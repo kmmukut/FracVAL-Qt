@@ -201,8 +201,10 @@ is missing, the conda install command for the current OS.
 Targets keep their names. `python-ext`, `python-test`, `fortran-test`, `test`,
 and `clean` delegate to `tools/build.py` / `pytest`. The native `$(TARGET)`
 rules stay for incremental POSIX builds. `install`/`install-gui` unchanged.
-The Makefile is documented as POSIX-only; Windows users call the Python tooling
-directly.
+The Makefile is now Windows-aware rather than POSIX-only: `TARGET`, `PYTHON`,
+and the executable rule are conditional on `$(OS) == Windows_NT`, so on
+Windows the executable build delegates to `tools/build.py exe` while POSIX
+keeps its incremental object rules.
 
 ### 5.11 CI (`.github/workflows/ci.yml`)
 
@@ -263,12 +265,58 @@ returned by `discover_toolchain()`, consumed by `tools/build.py` and
   Windows build is expected to reproduce them within the existing tolerances of
   `test_python_api.py`, and the CI job asserts that.
 
-## 9. Open verification items (resolved during implementation, not design)
+## 9. Verification items (resolved during implementation)
 
 1. `gfortran_win-64` version pin and whether it pulls in `gcc_win-64`
    automatically or needs an explicit entry.
+
+   RESOLVED. `environment-windows.yml` lists both `gfortran_win-64` and
+   `gcc_win-64` with no version pin, and conda-forge solves it on
+   `windows-latest`. The installed set is gcc_win-64 16.2.0, gfortran_win-64
+   16.2.0, binutils_win-64 2.46.1, plus mingw-w64-ucrt-x86_64-crt-git,
+   -headers-git, -winpthreads-git, mingw-w64-ucrt-x86_64-windows-default-manifest
+   and ucrt. No fallback to `m2w64-*` or `mingw-w64-ucrt-x86_64-gcc` was
+   needed. This did expose one real gap: the CRT startup objects (`crt2.o`,
+   `default-manifest.o`) live under `<sysroot>/usr/lib` while the compiler
+   driver only searches `<sysroot>/lib`, so linking failed with "cannot find
+   crt2.o" until `tools/build.py` gained `crt_search_flags()`, which queries
+   the driver with `-print-file-name=crt2.o` and, only when that fails to
+   resolve, adds `-B`/`-L` for the directory that actually holds it. `-L`
+   alone is insufficient because crt2.o is a startfile.
+
 2. Whether `-static-libquadmath` is accepted by that GCC; if not, drop it and
    rely on the DLL-copy fallback.
+
+   RESOLVED, yes. The Windows extension link uses
+   `-shared -static-libgfortran -static-libgcc -static-libquadmath` and
+   succeeds with conda-forge gcc 16.2.0, both in CI and on the maintainer's
+   machine. No DLL-copy fallback was needed. The related import-library
+   question is resolved too: conda Python does ship `libs/pythonXY.lib`, and
+   `python_import_library()` found `python314.lib` on the maintainer's
+   Python 3.14 environment.
+
 3. Whether the QtWebEngine offscreen smoke test runs on `windows-latest`; if it
    cannot, the Windows CI job runs `fracval-qt-check` only and the GUI smoke
    test is marked as maintainer-machine verification.
+
+   RESOLVED, it does not, and the spec's own fallback was applied. On the
+   GitHub runner, importing Qt from the pip PySide6 wheel inside the conda
+   environment fails at QtCore with "DLL load failed ... The specified
+   procedure could not be found" (Windows error 127), a DLL version clash
+   with `%CONDA_PREFIX%\Library\bin`, which carries both versioned and
+   unversioned ICU (icuuc.dll alongside icuuc78.dll, etc.). `fracval-qt-check`
+   DOES pass on the runner (it inspects the plugin layout without importing
+   QtWidgets) and reports platforms `direct2d, minimal, offscreen, windows`
+   with `windows` selected. The GUI construction test is therefore non-fatal
+   on Windows only. This is runner-specific, not a defect of the documented
+   setup: on the maintainer's real Miniforge Windows install Qt imports
+   correctly (QtCore, QtGui and QtWidgets all load).
+
+4. (New, discovered during implementation) Whether a PySide6 build without
+   QtWebEngine produces an actionable error.
+
+   RESOLVED. A PySide6 build without QtWebEngine (conda-forge PySide6, or an
+   existing PySide6 that already satisfied the requirement so the pip wheel
+   was never installed) now produces an actionable `ImportError` from
+   `python/fracval/desktop/viewer.py` naming the reinstall command, instead
+   of a bare `ModuleNotFoundError`.
