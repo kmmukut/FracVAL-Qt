@@ -53,9 +53,19 @@ def _version_banner(path: Path) -> str:
 
 def _find(kind: str, explicit: str | None, env_var: str, names: tuple[str, ...],
           searched: list[str]) -> Compiler | None:
-    candidates: list[str] = []
+    # An explicit --fc/--cc is a deliberate request: if it doesn't resolve, fail
+    # rather than silently falling back to a different compiler (possibly a
+    # different ABI). $FC/$CC is ambient rather than explicit, so it stays soft
+    # and may fall through to the well-known names below.
     if explicit:
-        candidates.append(explicit)
+        searched.append(explicit)
+        found = shutil.which(explicit)
+        if found:
+            path = Path(found).resolve()
+            return Compiler(kind, path, _version_banner(path))
+        return None
+
+    candidates: list[str] = []
     env_value = os.environ.get(env_var)
     if env_value:
         candidates.append(env_value)

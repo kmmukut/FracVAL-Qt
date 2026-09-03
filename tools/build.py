@@ -33,9 +33,6 @@ EXT_GEN = EXT_BUILD / "generated"
 EXT_OBJ = EXT_BUILD / "obj"
 PYF = PKG / "_fracval_fortran.pyf"
 
-if str(ROOT / "python") not in sys.path:
-    sys.path.insert(0, str(ROOT / "python"))
-
 
 def _load_toolchain():
     """Load fracval/_toolchain.py directly.
@@ -160,7 +157,13 @@ def python_import_library() -> Path | None:
     tag = f"{sys.version_info.major}{sys.version_info.minor}"
     lib = Path(sys.base_prefix) / "libs" / f"python{tag}.lib"
     if not lib.is_file():
-        raise SystemExit(f"Python import library not found: {lib}")
+        raise SystemExit(
+            f"Python import library not found: {lib}\n"
+            "MinGW needs the CPython import library to link the extension. "
+            "conda-forge and python.org installers ship it in <prefix>\\libs\\; "
+            "Microsoft Store and embeddable Python distributions do not. "
+            "Build inside the conda environment instead."
+        )
     return lib
 
 

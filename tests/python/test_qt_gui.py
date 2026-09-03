@@ -4,11 +4,22 @@ import os
 from pathlib import Path
 import sys
 
+import pytest
+
 os.environ.setdefault("QTWEBENGINE_DISABLE_SANDBOX", "1")
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --no-sandbox")
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "python"))
+
+try:
+    import PySide6  # noqa: F401
+except ModuleNotFoundError:
+    # PySide6 is genuinely absent: skip cleanly instead of a collection error.
+    # `configure_qt_runtime()` below raises RuntimeError (not ModuleNotFoundError)
+    # once PySide6 is missing, so this check must run first. A present-but-broken
+    # PySide6 (e.g. the Windows Qt DLL-load failure) still errors loudly below.
+    pytest.skip("PySide6 is not installed", allow_module_level=True)
 
 from fracval.desktop.qt_runtime import apply_qt_library_path, configure_qt_runtime
 

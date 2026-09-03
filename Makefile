@@ -51,9 +51,11 @@ $(BUILD_DIR)/CCA_module.o: $(BUILD_DIR)/Ctes.o $(BUILD_DIR)/PCA_Subclusters_modu
 $(BUILD_DIR)/Frac_VAL_CCA.o: $(BUILD_DIR)/Ctes.o $(BUILD_DIR)/a_Random_PP.o $(BUILD_DIR)/RAND_SAMPLE.o $(BUILD_DIR)/CCA_module.o
 
 ifeq ($(OS),Windows_NT)
-$(TARGET):
-	$(PYTHON) tools/build.py exe --fc $(FC)
+FC_ARG :=
+$(TARGET): $(wildcard $(SRC_DIR)/*.f90)
+	$(PYTHON) tools/build.py exe $(FC_ARG)
 else
+FC_ARG := --fc $(FC)
 $(TARGET): $(OBJECTS)
 	$(FC) $(FFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
 endif
@@ -76,7 +78,7 @@ fortran-test: $(TARGET)
 	$(PYTHON) -m pytest tests/python/test_fortran_cli.py
 
 python-ext:
-	$(PYTHON) tools/build.py ext --fc $(FC)
+	$(PYTHON) tools/build.py ext $(FC_ARG)
 
 python-test: $(TARGET) python-ext
 	$(PYTHON) -m pytest --ignore=tests/python/test_fortran_cli.py

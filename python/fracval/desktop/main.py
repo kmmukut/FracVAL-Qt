@@ -28,7 +28,8 @@ def main() -> int:
         from PySide6.QtWidgets import QApplication
     except ImportError as exc:
         print(
-            "PySide6 is not installed. Install the GUI dependencies with:\n"
+            f"Could not import PySide6.QtWidgets: {exc}\n\n"
+            "If PySide6 is missing, install the GUI dependencies with:\n"
             "  python -m pip install -e '.[gui]'",
             file=sys.stderr,
         )

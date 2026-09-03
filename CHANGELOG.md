@@ -5,7 +5,7 @@
 ### Added
 
 - Native Windows support with a conda-forge MinGW-w64 toolchain (`environment-windows.yml`).
-- `tools/build.py`: one cross-platform command to build the standalone executable and the F2PY extension (`exe`, `ext`, `all`, `clean`), with a post-link import check and automatic gfortran runtime DLL fallback on Windows.
+- `tools/build.py`: one cross-platform command to build the standalone executable and the F2PY extension (`exe`, `ext`, `all`, `clean`), with a post-link import check and automatic gfortran runtime DLL fallback on Windows. It honours `LDFLAGS` (and gained a `--ldflags` option), and on Windows adds `-B`/`-L` for the conda-forge MinGW CRT directory when the compiler driver cannot resolve `crt2.o`.
 - `environment.yml` for macOS/Linux conda users.
 - `fracval-info` now reports the discovered Fortran and C compilers.
 - GitHub Actions matrix on Ubuntu, macOS, and Windows.
@@ -27,7 +27,7 @@
 
 ### Known issues
 
-- The Windows CI job builds the standalone executable and the F2PY extension and runs the full pytest suite, and `fracval-qt-check` passes there too. The headless Qt GUI construction test is non-fatal on that runner only, because its conda environment has a DLL clash with the pip PySide6 wheel ("DLL load failed ... The specified procedure could not be found"). On a normal Miniforge Windows install Qt imports correctly (`QtCore`, `QtGui`, and `QtWidgets` all load), and the GUI is maintainer-verified there.
+- The Windows CI job builds the standalone executable and the F2PY extension and runs the full pytest suite, and `fracval-qt-check` passes there too, confirming the plugin layout is discovered and the `windows` platform plugin is present (it never imports Qt itself, and CI runs it as `fracval-qt-check || true`). The headless Qt GUI construction test is non-fatal on that runner only, because its conda environment has a DLL clash with the pip PySide6 wheel ("DLL load failed ... The specified procedure could not be found"). On a normal Miniforge Windows install Qt imports correctly (`QtCore`, `QtGui`, and `QtWidgets` all load), and the GUI is maintainer-verified there.
 
 ## 1.0.1 - 2026-09-02
 

@@ -7,10 +7,11 @@
    and statistical-overlap examples. They validate particle counts, radii,
    `N-1` contact histories, fixed 5% overlap, and bounded statistical
    variation.
-2. **Python API tests** (`tests/python/`) build the F2PY extension, check
-   fixed-seed reproducibility, compare extension output with the standalone
-   executable, validate polydisperse radii, verify fixed/statistical overlap in
-   the final geometry, and exercise Plotly rendering.
+2. **Python API tests** (`tests/python/`) skip when the F2PY extension is
+   absent and otherwise check fixed-seed reproducibility, compare extension
+   output with the standalone executable, validate polydisperse radii, verify
+   fixed/statistical overlap in the final geometry, and exercise Plotly
+   rendering.
 
 The overlap geometry test computes all positive pair intersections from the
 returned coordinates. In the fixed 5% case it confirms that the `N-1` intended
