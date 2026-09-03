@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  scientific-regression:
+  linux-apt:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,3 +36,39 @@ jobs:
 
       - name: Run deterministic Fortran/Python regression suite
         run: make test PYTHON=python
+
+  conda-toolchain-probe:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            env-file: environment.yml
+          - os: macos-latest
+            env-file: environment.yml
+          - os: windows-latest
+            env-file: environment-windows.yml
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniforge environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          environment-file: ${{ matrix.env-file }}
+          activate-environment: fracval
+          auto-activate-base: false
+
+      - name: Report toolchain
+        run: |
+          conda info
+          conda list
+          python --version
+          gfortran --version
+          gcc --version
+          python -c "import numpy, plotly, PySide6; print(numpy.__version__, plotly.__version__, PySide6.__version__)"
