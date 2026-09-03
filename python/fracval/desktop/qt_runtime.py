@@ -1,10 +1,10 @@
 """Qt runtime discovery and platform-plugin setup.
 
 PySide6 normally discovers its bundled Qt plugins automatically. Some macOS
-Python environments (notably Conda/venv combinations or shells carrying Qt
-environment variables) can leave Qt with an empty or incompatible plugin search
-path.  FracVAL resolves the PySide6 wheel's own plugin directory before the
-QApplication is created and points Qt at that directory explicitly.
+and Windows Python environments (notably Conda/venv combinations or shells
+carrying Qt environment variables) can leave Qt with an empty or incompatible
+plugin search path. FracVAL resolves the PySide6 wheel's own plugin directory
+before the QApplication is created and points Qt at that directory explicitly.
 """
 from __future__ import annotations
 
@@ -39,6 +39,7 @@ def _candidate_pyside_dirs() -> Iterable[Path]:
     # unusual, while still preferring the package selected by this Python.
     for base in (Path(sys.prefix), Path(sys.base_prefix)):
         yield base / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages" / "PySide6"
+        yield base / "Lib" / "site-packages" / "PySide6"  # Windows layout
 
 
 def _find_plugin_root(pyside_dir: Path) -> Path | None:
@@ -87,6 +88,15 @@ def _prefix_plugin_roots() -> Iterable[Path]:
         yield base / "plugins"
         yield base / "Library" / "plugins"
         yield base / "Library" / "lib" / "qt6" / "plugins"
+
+
+def desktop_platform() -> str | None:
+    """QPA platform plugin FracVAL pins for a visible desktop session on this OS."""
+    if sys.platform == "darwin":
+        return "cocoa"
+    if sys.platform == "win32":
+        return "windows"
+    return None
 
 
 def discover_qt_runtime() -> QtRuntimeInfo:
@@ -199,12 +209,14 @@ def configure_qt_runtime(*, headless: bool = False) -> QtRuntimeInfo:
                     + (", ".join(info.platforms) or "none")
                 )
             os.environ["QT_QPA_PLATFORM"] = selected
-    elif sys.platform == "darwin" and "cocoa" in info.platforms:
-        # FracVAL's normal macOS launcher is a desktop application, so select
-        # Cocoa explicitly. This also neutralizes an inherited offscreen/Linux
-        # platform value from Conda, CI, or a previous shell configuration.
-        os.environ["QT_QPA_PLATFORM"] = "cocoa"
-        selected = "cocoa"
+    else:
+        # A desktop launch pins the native platform plugin. This also neutralizes
+        # an inherited offscreen/xcb value from Conda, CI, WSL, or a previous
+        # shell configuration. Linux is left to Qt's own xcb/wayland selection.
+        pinned = desktop_platform()
+        if pinned is not None and pinned in info.platforms:
+            os.environ["QT_QPA_PLATFORM"] = pinned
+            selected = pinned
 
     return QtRuntimeInfo(
         pyside_dir=info.pyside_dir,
@@ -246,10 +258,10 @@ def main() -> int:
         return 2
 
     print(diagnostic_text(info))
-    expected = "cocoa" if sys.platform == "darwin" else None
+    expected = desktop_platform()
     if expected and expected not in info.platforms:
         print(
-            f"\nWARNING: expected macOS platform plugin '{expected}' was not found.",
+            f"\nWARNING: expected desktop platform plugin '{expected}' was not found.",
             file=sys.stderr,
         )
         return 1

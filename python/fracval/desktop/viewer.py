@@ -21,7 +21,9 @@ class AggregateViewer(QWebEngineView):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self._tmp = tempfile.TemporaryDirectory(prefix="fracval-viewer-")
+        # Chromium may still hold the HTML file when Qt tears the widget down on
+        # Windows; never let that turn into an exception at exit.
+        self._tmp = tempfile.TemporaryDirectory(prefix="fracval-viewer-", ignore_cleanup_errors=True)
         self._html_path = Path(self._tmp.name) / "aggregate.html"
         self._figure = None
         self._aggregate: Aggregate | None = None
