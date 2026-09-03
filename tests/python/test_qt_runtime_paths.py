@@ -103,12 +103,19 @@ def test_headless_prefers_offscreen(tmp_path, monkeypatch, isolated_environ):
 
 
 def test_missing_qtwebengine_gives_actionable_import_error(monkeypatch):
-    """viewer.py must translate a missing QtWebEngine into guidance, not a bare
-    ModuleNotFoundError, while leaving other ImportErrors untouched.
+    """When PySide6 is installed, viewer.py must translate a missing QtWebEngine into
+    guidance, not a bare ModuleNotFoundError, while leaving other ImportErrors untouched.
 
     Simulated via builtins.__import__ so this passes on a machine (like this
     one) where QtWebEngine actually is installed.
+
+    PRECONDITION: This test requires PySide6 to be installed. It is skipped entirely
+    when PySide6 is unavailable.
     """
+    pytest.importorskip(
+        "PySide6.QtCore",
+        reason="PySide6 is not installed, so fracval.desktop.viewer cannot be imported at all",
+    )
     real_import = builtins.__import__
 
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
