@@ -9,7 +9,12 @@
 FC = gfortran
 FFLAGS ?= -O2
 LDFLAGS ?=
+
+ifeq ($(OS),Windows_NT)
+PYTHON ?= python
+else
 PYTHON ?= python3
+endif
 
 SRC_DIR := src
 BUILD_DIR := build
